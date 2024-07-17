@@ -9,9 +9,10 @@ library("ggpubr")
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
-seuset_immune <- LoadSeuratRds("TEPA_results/S03_immuneDiff.Rds")
-seuset_full<- LoadSeuratRds("TEPA_results/S08_seusetFull.Rds")
-immune.markers <- read.csv("TEPA_results/02_DEA_clusterMarkers.csv")
+seuset_immune <- LoadSeuratRds("TEPA_results/S03_immuneDiff.SeuratRds")
+seuset_full<- LoadSeuratRds("TEPA_results/S08_seusetFull.SeuratRds")
+immune.markers <- read.csv("TEPA_results/S03_DEA_clusterMarkers.csv")
+immune.markers <- read.csv("TEPA_results/S03_immuneCond_DEA.xlsx")
 
 DefaultAssay(seuset_immune) <- "RNA"
 
@@ -19,35 +20,6 @@ DefaultAssay(seuset_immune) <- "RNA"
 grep(pattern = "H", 
      x = rownames(x = seuset_immune@assays$RNA@data), 
      value = TRUE, ignore.case = TRUE)
-
-#  Plot density plot with key markers for important populations  
-
-png("TEPA_plots/03_densityPlatelets.png", h = 2000, w = 3500, res = 200)
-DefaultAssay(seuset_immune) <-"RNA"
-plot_density(seuset_immune, features = c("Itga2b", "Itgb3"), joint = TRUE)
-dev.off()
-
-png("TEPA_plots/03_densityErythro.png", h = 2000, w = 3500, res = 200)
-DefaultAssay(seuset_immune)<-"RNA"
-plot_density(seuset_immune, features = "Gypa")
-dev.off()
-
-png("TEPA_plots/03_densityTreg.png", h = 2000, w = 3500, res = 200)
-DefaultAssay(seuset_immune)<-"RNA"
-plot_density(seuset_immune, features = c("Il2ra","Foxp3"), joint = TRUE)
-dev.off() # Treg higher in tumor and in inflammation: cd25 and foxp3
-
-# Classical monocytes and Nks: Ccr2 important for neutrophils mobilitisation and recruitment to metastatic sites
-
-png("TEPA_plots/03_densityEosino.png", h = 2000, w = 3500, res = 200)
-DefaultAssay(seuset_immune)<-"RNA"
-plot_density(seuset_immune, features = c("Il5ra", "Ccr3", "Adgre1","Ccl6"), joint = TRUE)
-dev.off()
-
-png("TEPA_plots/03_densityMemory.png", h = 2000, w = 3500, res = 200)
-DefaultAssay(seuset_immune)<-"RNA"
-plot_density(seuset_immune, features = c("Il7r", "Ctla4"), joint = TRUE)
-dev.off()
 
 png("TEPA_plots/03_Mt2_split.png", h = 2000, w = 3500, res = 200)
 plot_density(seuset_immune, "Mt2") + 
@@ -58,32 +30,6 @@ dev.off()
 png("TEPA_plots/03_Mt1Mt2_violin.png", h = 2000, w = 3500, res = 200)
 Idents(seuset_immune) <- "condition"
 VlnPlot(seuset_immune, features = c("Mt2", "Mt1"), ncol = 2,pt.size = 0.000005)
-dev.off()
-
-png("TEPA_plots/03_Ifngr_violin.png", h = 2000, w = 3500, res = 200)
-DefaultAssay(seuset_immune) <- "RNA"
-Idents(seuset_immune) <- "scType"
-VlnPlot(seuset_immune, features = "Ifngr1", split.by="condition", ncol = 1,pt.size = 0.000005)
-dev.off()
-
-png("TEPA_plots/03_Ceacam.png", h = 2000, w = 3500, res = 200)
-DefaultAssay(seuset_immune) <- "RNA"
-Idents(seuset_immune) <- "scType"
-VlnPlot(seuset_immune, features = c("Ceacam1","Ceacam10"), 
-        split.by="condition", ncol = 2, pt.size = 0.000005) + geom_boxplot()
-dev.off()
-
-png("TEPA_plots/03_NeutrophilsActive.png", h = 2000, w = 3500, res = 200)
-DefaultAssay(seuset_immune) <- "RNA"
-Idents(seuset_immune) <- "scType"
-FeaturePlot(seuset_immune, features = c("Fut4", "Itgb2", "Itgam"), 
-        split.by="condition", ncol = 3, pt.size = 0.000005)
-dev.off()
-
-png("TEPA_plots/03_NeutroMacro.png", h = 2000, w = 3500, res = 200)
-DefaultAssay(seuset_immune) <- "RNA"
-Idents(seuset_immune) <- "scType"
-FeaturePlot(seuset_immune, features = c("Ly6g", "Ly6g5b", "Ly6g6c"), ncol = 3, pt.size = 0.000005)
 dev.off()
 
 png("TEPA_plots/S03_Prnp_ImmuneCond.png", h = 2000, w = 3500, res = 400)
@@ -103,6 +49,15 @@ fig +  ylim(0, 5) +
   geom_signif(xmin = 4.75, xmax = 5.25, y_position = 4.5, annotations="***")
 dev.off()
 
+
+#### See difference in proportions of lymphoid and myeloid cells tumor vs immune cells ####
+
+png("TEPA_plots/S06_LymphoMyeloCompare.png", h = 2000, w = 3500, res = 200)
+Idents(seuset_full) <- "class"
+VlnPlot(seuset_full, features = c("Cd3e", "Itgam"), split.by = "condition",
+            ncol = 2, pt.size = 0.000005)
+dev.off()
+
 png("TEPA_plots/S03_lympho.png", h = 4000, w = 6500, res = 200)
 DefaultAssay(seuset_immune) <- "RNA"
 Idents(seuset_immune) <- "scType"
@@ -113,15 +68,6 @@ png("TEPA_plots/S06_LymphoMyelo.png", h = 2000, w = 3500, res = 200)
 DefaultAssay(seuset_immune) <- "RNA"
 Idents(seuset_immune) <- "scType"
 FeaturePlot(seuset_immune, features = c("Cd3e", "Itgam"),
-            ncol = 2, pt.size = 0.000005)
-dev.off()
-
-
-#### See difference in proportions of lymphoid and myeloid cells tumor vs immune cells ####
-
-png("TEPA_plots/S06_LymphoMyeloCompare.png", h = 2000, w = 3500, res = 200)
-Idents(seuset_full) <- "class"
-VlnPlot(seuset_full, features = c("Cd3e", "Itgam"), split.by = "condition",
             ncol = 2, pt.size = 0.000005)
 dev.off()
 
@@ -155,34 +101,40 @@ sign_avgHeatMap(seuset_full, cytokines, immune = FALSE,
                 cluster = TRUE, k = 3, legend = TRUE) #check why it doesn't work
 dev.off()
 
-#### Check Control T-cells ####
+#### Immune activation and migration ####
 
-grep(pattern = "Th1", 
-     x = rownames(x = seuset_immune@assays$RNA@data), 
-     value = TRUE, ignore.case = TRUE)
+immune_migr <- c("Trem1", "Adam8", "Clec4e", "Cd14", "Ccr7", "Cxcr4", "Fpr1")
 
+immune_extra <-c("Itgam", "Itgb2", "Cd177", "Itgal", "Cd44", "Itga2", "Itgb1", "Myo1f")
 
-CD8_exh <- c("Pdcd1", "Havcr2", "Lag3", "Ctla4", "Cd244a", "Cd160")
-#PD-1, TIM-3, LAG3, CTLA-4, 2B4, Cd244, TIGIT
-CD4_reg <- c("Foxp3", "Il2ra", "Il10")
-# FOXP3, CD25, Il10
+interferon <-c("Ifit1","Ifit2", "Ifit3", "Isg15", "Isg20", "Ifitm1", "Ifitm2", "Ifitm3", "Ifitm6")
 
 
-supp <- c(CD8_exh, CD4_reg)
-save = "S06_complexHeat_Exh"
-png(paste0("TEPA_plots/",save,".png"), h = 5000, w = 6000, res = 400)
-sign_avgHeatMap(seuset_full, CD8_exh, immune = FALSE,
-                cluster = TRUE, k = 3, legend = TRUE) #check why it doesn't work
+save = "S06_complexHeat_Migration"
+pdf(paste0("TEPA_final_figures/",save,".pdf"), h = 15, w = 15)
+sign_avgHeatMap(seuset_full, immune_migr, immune = FALSE,
+                cluster = TRUE, k = 1, legend = TRUE) 
 dev.off()
 
-immune_sup_cancer <- c("Ido1", "Cd274") #Pdl1
-
-
-png("TEPA_plots/S06_Ido1_VlnPlot.png", h = 2000, w = 3500, res = 200)
-Idents(seuset_full) <- "class"
-VlnPlot(seuset_full, features = immune_sup_cancer, split.by = "condition",
-        ncol = 2, pt.size = 0.000005)
+save = "S06_complexHeat_Extravasation_scaled"
+pdf(paste0("TEPA_final_figures/",save,".pdf"), h = 15, w = 15)
+sign_avgHeatMap(seuset_full, immune_extra, immune = FALSE,
+                cluster = TRUE, k = 1, legend = TRUE) 
 dev.off()
+
+save = "S06_complexHeat_ExtraMigr_FC_Neutro"
+pdf(paste0("TEPA_final_figures/",save,".pdf"), h = 15, w = 5)
+sign_avgLogFCHeatMap(seuset_full, c(immune_extra, immune_migr), immune = TRUE, 
+                     celltype = "Neutrophils",
+                cluster = TRUE, k = 1, legend = TRUE) 
+dev.off()
+
+save = "S06_complexHeat_Interferon_FC_Neutro"
+pdf(paste0("TEPA_final_figures/",save,".pdf"), h = 15, w = 5)
+sign_avgLogFCHeatMap(seuset_full, interferon, immune = FALSE, celltype = "Neutrophils",
+                cluster = TRUE, k = 1, legend = TRUE) 
+dev.off()
+
 
 
 

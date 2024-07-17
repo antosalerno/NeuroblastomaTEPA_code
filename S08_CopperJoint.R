@@ -11,8 +11,8 @@ library(GetoptLong)
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
-seuset_immune <- LoadSeuratRds("TEPA_results/S04_immuneDiff.Rds")
-seuset_tumor <- LoadSeuratRds("TEPA_results/S05_seusetTumorClu.Rds")
+seuset_immune <- LoadSeuratRds("TEPA_results/S03_immuneDiff.Rds")
+seuset_tumor <- LoadSeuratRds("TEPA_results/S00_tumor.Rds")
 
 seuset_full <- merge(seuset_immune, y = seuset_tumor, 
                      add.cell.ids = c("immune", "tumor"), 
@@ -27,20 +27,20 @@ seuset_full$condition <- factor(seuset_full$condition,
 
 seuset_full@meta.data$celltypes <- factor(seuset_full@meta.data$celltypes,
                                             levels=c("Cd4+ Naive T cells","Cd4+ Memory T cells",  
-                                                     "Cd8+ Naive-Memory T cells","Cd8+ NkT-like cells" , 
+                                                     "Cd8+ Naive-Memory T cells","Cd8+ effector T cells" , 
                                                      "Gamma-delta T cells","DN Regulatory T cells" , 
                                                      "Natural killer cells", 
                                                      "B cells" , "Dendritic cells", "Macrophages", 
                                                      "Basophils", "Eosinophils", "Neutrophils", "Tumor"  
                                             ))
 
-SaveSeuratRds(seuset_full, "TEPA_results/S08_seusetFull.Rds")
+SaveSeuratRds(seuset_full, "TEPA_results/S08_seusetFull.SeuratRds")
 
 
 #### Create a signature of copper-related genes ####
 
 copper_genes <- c("Sod1", "Sod2", "Gls","Sp1", "Atox1",  "Mtf2","Pdha1", "Pdhb", "Lias", "Dld", "Dlat", 
-                  "Mt1", "Mt2", "Slc31a1", "Atp7a","Steap4",
+                  "Mt1", "Mt2", "Slc31a1", "Atp7a","Steap4", "S100a8","S100a9", "Adam8", "Serpine1", "Trem1",
                   "Atp7b", "Steap3", 
                   "Sco1", "Cox11", "Commd1", "Mtf1","Fdx1")
 
@@ -62,7 +62,7 @@ for (cluster in clusters){
   res$celltype <- cluster
   df <- rbind(df, res)
 }
-file=paste0("TEPA_results/S05_tumorBulkDEA.csv")
+file=paste0("TEPA_results/S05_tumorBulkDEA_MAST.csv")
 res <- read.csv(file, sep=",")
 res$celltype <- "Tumor"
 df <- rbind(df, res)
@@ -90,18 +90,18 @@ library(ComplexHeatmap)
 library(circlize)
 
 save = "S08_complexDot_Copper_sign"
-#png(paste0("TEPA_plots/",save,".png"), h = 5000, w = 6000, res = 400)
-pdf(qq(paste0("TEPA_final_figures/",save,".pdf")), h = 15, w = 15)
+png(paste0("TEPA_plots/",save,".png"), h = 5000, w = 6000, res = 400)
+#pdf(qq(paste0("TEPA_final_figures/",save,".pdf")), h = 15, w = 15)
 sign_dotPlot(seuset_immune, copper_genes, immune=TRUE, cluster = FALSE,k=2, legend = FALSE) #check why it doesn't work
 dev.off()
 
-#### B - Create an heatmap to understand differences between immune cells and tumor cells as well as control and treatment ####
+#### Create an heatmap to understand differences between immune cells and tumor cells as well as control and treatment ####
 
 save = "S08_complexHeat_Copper_sign"
 #png(paste0("TEPA_plots/",save,".png"), h = 5000, w = 6000, res = 400)
-pdf(qq(paste0("TEPA_final_figures/",save,".pdf")), h = 15, w = 15)
+pdf(paste0("TEPA_final_figures/",save,".pdf"), h = 15, w = 15)
 sign_avgHeatMap(seuset_full, copper_genes, immune = FALSE,
-                cluster = FALSE, k = 1, legend = FALSE) #check why it doesn't work
+                cluster = TRUE, k = 2, legend = TRUE) 
 dev.off()
 
 
@@ -122,7 +122,8 @@ ha = HeatmapAnnotation(df = as.data.frame(ordered_meta_data),
                        col = annotation_colors)
 
 # Expression data
-my_data <- seuset_full[copper_genes,]@assays$RNA@scale.data
+seuset_full <- JoinLayers(seuset_full)
+my_data <- seuset_full[copper_genes,]@assays$RNA
 my_data <- my_data[, rownames(ordered_meta_data)]
 
 # Heatmap
@@ -147,6 +148,12 @@ h2 <- Heatmap(
 )
 dev.off()
 
+
+save = "S06_complexHeat_FC_Copper_Neutro"
+pdf(paste0("TEPA_final_figures/",save,".pdf"), h = 15, w = 5)
+sign_avgLogFCHeatMap(seuset_full, copper_genes, immune = FALSE, celltype = "Neutrophils",
+                     cluster = TRUE, k = 1, legend = TRUE) 
+dev.off()
 
 
 

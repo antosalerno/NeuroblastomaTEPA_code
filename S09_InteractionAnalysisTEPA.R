@@ -18,12 +18,31 @@ options(stringsAsFactors = FALSE)
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
-seuset_full <- LoadSeuratRds("TEPA_results/S08_seusetFull.Rds")
+seuset_full <- LoadSeuratRds("TEPA_results/S08_seusetFull.SeuratRds")
 
 # 1. DATA PREPARATION ####
 seuset_tepa <- seuset_full[,seuset_full$condition == "Treatment"]
 
-data.input <- GetAssayData(seuset_tepa, assay = "RNA", layer = "data") # normalized data matrix
+### Save cell type proportions by gene to use the dataset as annotation for spatial data ####
+
+expression_matrix <- seuset_tepa@assays$integrated@data
+# Convert the expression matrix to a data frame and add cell type information
+expression_df <- as.data.frame(t(as.matrix(expression_matrix)))
+expression_df$celltype <- seuset_tepa$celltypes
+
+# Aggregate the expression data by cell type
+aggregated_expression <- expression_df %>%
+  group_by(celltype) %>%
+  summarise(across(everything(), sum))
+
+# Remove the cell type column from the data frame
+aggregated_expression_matrix <- as.matrix(aggregated_expression %>% select(-celltype))
+rownames(aggregated_expression_matrix) <- aggregated_expression$celltype
+
+write.csv(t(aggregated_expression_matrix), "TEPA_results/S02_cellbygeneProp.csv")
+
+seuset_tepa <- JoinLayers(seuset_tepa)
+data.input <- LayerData(seuset_tepa,  layer = "data") # normalized data matrix
 labels <- seuset_tepa$celltypes
 meta <- data.frame(group = labels, row.names = names(labels)) # create a dataframe of the cell labels
 
@@ -33,6 +52,8 @@ cellchatTEPA <- addMeta(cellchatTEPA, meta = meta)
 cellchatTEPA <- setIdent(cellchatTEPA, ident.use = "group") # set "labels" as default cell identity
 levels(cellchatTEPA@idents) # show factor levels of the cell labels
 groupSize <- as.numeric(table(cellchatTEPA@idents)) # number of cells in each cell group
+
+# Downsampling but maybe the interaction by weight are good?
 
 # 2. SET THE LIGAND-RECEPTOR INTERACTION DATABASE for cell communication analysis ####
 
@@ -209,7 +230,7 @@ selectK(cellchat, pattern = "outgoing") # drops at 9
 nPatterns = 8
 cellchatTEPA <- identifyCommunicationPatterns(cellchatTEPA, pattern = "outgoing", k = nPatterns)
 
-# river plot
+# River plot
 pdf("TEPA_final_figures/S09_TEPAsystems_alluvialOUT.pdf", h = 6, w = 12)
 netAnalysis_river(cellchatTEPA, pattern = "outgoing")
 dev.off()
@@ -239,5 +260,5 @@ pdf("TEPA_final_figures/S09_TEPAsystems_struc.pdf", h = 6, w = 6)
 netVisual_embedding(cellchatTEPA, type = "structural", label.size = 3.5)
 dev.off()
 
-saveRDS(cellchatTEPA, file = "TEPA_results/TEPAcellchat.rds")
+saveRDS(cellchatTEPA, file = "TEPA_results/TEPAcellchat.Rds")
 

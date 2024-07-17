@@ -208,9 +208,3 @@ dev.off()
 
 SaveSeuratRds(immune,"TEPA_results/S00_immune.Rds")
 
-
-## unload currently loaded packages for next session
-#lapply(names(sessionInfo()$loadedOnly), require, character.only = TRUE)
-#invisible(lapply(paste0('package:', names(sessionInfo()$otherPkgs)), detach, character.only=TRUE, unload=TRUE, force=TRUE))
-
-

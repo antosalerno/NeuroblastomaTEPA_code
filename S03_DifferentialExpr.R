@@ -13,7 +13,7 @@ library(RColorBrewer)
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
-seuset_immune <- LoadSeuratRds("TEPA_results/S02_immuneAnn.Rds")
+seuset_immune <- LoadSeuratRds("TEPA_results/S02_immuneAnn.SeuratRds")
 
 #### 1 - Inter-cluster DEA: get marker genes ####
 
@@ -50,7 +50,7 @@ seuset_immune <- createSets()
 
 Idents(seuset_immune) <- "celltypes"
 png("TEPA_plots/S03_immuneClustersAnnot.png", h = 3000, w = 4500, res = 200)
-#pdf(qq("TEPA_final_figures/S03_immuneClustersAnnot.pdf"), h = 10, w = 14)
+#pdf("TEPA_final_figures/S03_immuneClustersAnnot.pdf", h = 10, w = 14)
 patchwork::wrap_plots(FeaturePlot(seuset_immune, ncol = 5, combine = TRUE,
                                   features = as.character(clusters), label = FALSE, repel = TRUE)) &
   theme_minimal() &

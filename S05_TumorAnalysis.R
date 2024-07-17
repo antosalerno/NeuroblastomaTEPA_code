@@ -6,6 +6,7 @@ library("Seurat")
 library("MAST")
 library("writexl")
 library(openxlsx)
+library(RColorBrewer)
 library("EnhancedVolcano")
 library("fgsea")
 library(dplyr)
@@ -17,7 +18,7 @@ library("org.Mm.eg.db", character.only = TRUE)
 library(clusterProfiler)
 library(ggplot2)
 library(ggcharts)
-
+library(glmGamPoi)
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
@@ -83,9 +84,13 @@ samples.list <- lapply(X = samples.list, FUN = function(x) {
   x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 2000)
 })
 
-features <- SelectIntegrationFeatures(seuset_tumorect.list = samples.list)
-tumor.anchors <- FindIntegrationAnchors(seuset_tumorect.list = samples.list,anchor.features = features)
-tumor.combined <- IntegrateData(anchorset = tumor.anchors)
+for (i in 1:length(samples.list)) {
+  samples.list[[i]] <- SCTransform(samples.list[[i]], vst.flavor = "v2", verbose = TRUE) 
+}
+
+features <- SelectIntegrationFeatures(object.list = samples.list)
+tumor.anchors <- FindIntegrationAnchors(object.list = samples.list, anchor.features = features)
+tumor.combined <- IntegrateData(anchorset = tumor.anchors, layer=)
 
 #### 2 - Dimensionality reduction ####
 
@@ -97,13 +102,14 @@ seuset_tumor <- RunPCA(seuset_tumor, npcs = 100, verbose = FALSE, assay = "integ
 pct <- seuset_tumor@reductions$pca@stdev / sum(seuset_tumor@reductions$pca@stdev) * 100
 # Calculate cumulative percents for each PC
 cum <- cumsum(pct)
-head(cum, n=80) # Select 80 PCs to retain 86.09 % of variability
+head(cum, n=60) # Select 60 PCs to retain 73.24 % of variability
 
-seuset_tumor <- FindNeighbors(seuset_tumorect = seuset_tumor, graph.name = "clust", dims = 1:80, reduction = 'pca')
-seuset_tumor <- FindClusters(seuset_tumorect = seuset_tumor, graph.name = "clust", resolution = 0.3, algorithm = 1) # original plot is 0.7
-seuset_tumor <- RunUMAP(seuset_tumor, dims = 1:80, reduction = "pca", verbose = FALSE)
+seuset_tumor <- FindNeighbors( seuset_tumor, graph.name = "clust", dims = 1:60, reduction = 'pca')
+seuset_tumor <- FindClusters(seuset_tumor, graph.name = "clust", resolution = 0.3, algorithm = 1) # original plot is 0.7
+seuset_tumor <- RunUMAP(seuset_tumor, dims = 1:60, reduction = "pca", verbose = FALSE)
 
-png("TEPA_plots/S05_tumorUmapClust.png", w = 4000, h = 4000, res = 350)
+#png("TEPA_plots/S05_tumorUmapClust.png", w = 4000, h = 4000, res = 350)
+pdf("TEPA_plots/S05_tumorUmapClust.pdf", w = 8, h = 8)
 DimPlot(seuset_tumor, pt.size = 0.5, reduction = 'umap', ncol = 1, 
              group.by = c("seurat_clusters", "condition"), label = FALSE) +
   ggtitle(paste(as.character(nrow(seuset_tumor@meta.data)), " cells")) +
@@ -111,7 +117,7 @@ DimPlot(seuset_tumor, pt.size = 0.5, reduction = 'umap', ncol = 1,
 dev.off()
 
 #png("TEPA_plots/S05_tumorUmapClusters.png", w = 2000, h = 2000, res = 200)
-pdf(qq("TEPA_final_figures/S05_tumorUmapClusters.pdf"), w = 9, h = 7)
+pdf("TEPA_final_figures/S05_tumorUmapClusters_v5.pdf", w = 9, h = 7)
 DimPlot(seuset_tumor, pt.size = 0.5, reduction = 'umap', ncol = 1, cols = tum_col,
         group.by = c("seurat_clusters"), label = TRUE) +
   theme(plot.title = element_text(hjust = 0.5)) 
@@ -128,12 +134,18 @@ SaveSeuratRds(seuset_tumor, "TEPA_results/S05_seusetTumorClu.Rds")
 
 #### 3 - Clustering annotation ####
 
+seuset_tumor <- LoadSeuratRds("TEPA_results/S05_seusetTumorClu.Rds")
+
+
 ### 3.1 Inter-cluster DEA: get marker genes ###
 
-DefaultAssay(seuset_tumor) <- "RNA"
+seuset_tumor <- JoinLayers(seuset_tumor)
 
-save = "S05_tumorMarkers"
+DefaultAssay(seuset_tumor) <- "integrated"
+
+save = "S05_tumorMarkers_v5"
 Idents(seuset_tumor) <- "seurat_clusters"
+
 
 ## A - Find markers for every cluster compared to all remaining cells
 tumor.markers <- FindAllMarkers(seuset_tumor, 
@@ -157,14 +169,14 @@ for(c in 1:length(clusters)){
 }
 saveWorkbook(wb, file=paste0("TEPA_results/",save,".xlsx"), overwrite = TRUE)
 
-# B - Add module score to the Seurat seuset_tumorect for each cluster ###
-tumor.markers <- read.csv("TEPA_results/S05_tumorMarkers.csv")
+# B - Add module score to the Seurat object for each cluster ###
+tumor.markers <- read.csv("TEPA_results/S05_tumorMarkers_v5.csv")
 
 seuset_tumor <- createSets(markers = tumor.markers, 
                            obj = seuset_tumor, id = "seurat_clusters")
 
 #png("TEPA_plots/S05_tumorClustersAnn.png", h = 3000, w = 4500, res = 300)
-pdf(qq("TEPA_final_figures/S05_tumorClustersAnn.pdf"), h = 7, w = 9)
+pdf("TEPA_final_figures/S05_tumorClustersAnn_v5.pdf", h = 7, w = 9)
 clusters = unique(Idents(seuset_tumor))
 patchwork::wrap_plots(FeaturePlot(seuset_tumor, ncol = 2, combine = TRUE, pt.size = 1, 
                                   features = as.character(clusters), label = TRUE, repel = TRUE)) & theme_minimal() &
@@ -176,7 +188,7 @@ dev.off()
 markers <- getTopMarkers(tumor.markers, 5)
 
 #png("TEPA_plots/S05_tumorDotPlot.png", h = 2000, w = 2500, res = 300)
-pdf(qq("TEPA_final_figures/S05_tumorDotPlot.pdf"), h = 5, w = 6)
+pdf("TEPA_final_figures/S05_tumorDotPlot_v5.pdf", h = 5, w = 6)
 DotPlot(seuset_tumor, features = unique(markers), # split.by = "condition",
         scale=TRUE, col.min = -4, col.max = 4, 
         dot.min = 0, dot.scale = 5, cols = c("blue","red")) + RotatedAxis() + coord_flip() +
@@ -185,7 +197,7 @@ dev.off()
 
 ## D - Plot Volcano of each cluster vs all the others: 
 save = "S05_tumorMarkers"
-plotVolcano(clusters, res = tumor.markers, type = "markers", input = "tumor", log2FC = 0.5, save = save)
+plotVolcano(clusters, res = tumor.markers, type = "markers", immune = F, log2FC = 0.5, save = save)
 
 #### 3.2 - Intra-cluster DEA with annotated dataset - Treatment vs Control ####
 Idents(seuset_tumor) <- "seurat_clusters"
@@ -223,24 +235,33 @@ Idents(seuset_tumor) <- "seurat_clusters"
 clusters = unique(Idents(seuset_tumor))
 
 save = "S05_tumor_"
-plotVolcano(clusters, log2FC = 0.5, save = save, input = "tumor")
+plotVolcano(clusters, log2FC = 0.5, save = save, immune = F)
 
 #### 3.3 DEA Treatment vs Control bulk dataset ####
-counts <- GetAssayData(seuset_tumor, assay = "RNA")
+DefaultAssay(seuset_tumor) <- "RNA"
+seuset_tumor <- JoinLayers(seuset_tumor)
+
+counts <- GetAssayData(seuset_tumor, assay = "RNA", layer = "counts")
 counts <- counts[-(which(rownames(counts) == "Xist")),]
 seuset_tumor <- subset(seuset_tumor, features = rownames(counts))
 
 Idents(seuset_tumor) <- "condition"
+
+seuset_tumor <- PrepSCTFindMarkers(seuset_tumor)
+
 res <- FindMarkers(seuset_tumor, 
                                 ident.1 = "Treatment", ident.2 = "Control",
-                                only.pos = FALSE, verbose = FALSE,
+                                only.pos = FALSE, verbose = FALSE, layer="counts",
+                                assay = "RNA",
                                 latent.vars="orig.ident",
-                                test.use="DESeq2")
-#res$p_val_adj = p.adjust(res$p_val, method='BH')
-write.csv(res, file=paste0("TEPA_results/S05_tumorBulkDEA_DESeq2.csv"))
+                                min.pct = 0.5, 
+                                min.diff.pct = 0.2,
+                                test.use="MAST")
+res$p_val_adj = p.adjust(res$p_val, method='BH')
+write.csv(res, file=paste0("TEPA_results/S05_tumorBulkDEA_MAST_v5.csv"))
 
 log2FC = 0.5
-save = "S05_tumorBulk_"
+save = "S05_tumorBulk_v5"
 res <- res %>% 
   filter(p_val_adj < 0.05);
 res[order(-res$avg_log2FC),]
@@ -248,7 +269,7 @@ res[order(-res$avg_log2FC),]
 markers_DEA <- rownames(rbind(head(res,20), tail(res,20)))
   
 #png("TEPA_plots/S05_tumorBulk_DEA_FeaturePlot.png", h = 2000, w = 2500, res = 300)
-pdf(qq("TEPA_final_figures/S05_tumorBulk_DEA_FeaturePlot.pdf"), h = 2, w = 10)
+pdf("TEPA_final_figures/S05_tumorBulk_DEA_FeaturePlot.pdf", h = 2, w = 10)
 DotPlot(seuset_tumor, features = unique(markers_DEA), # split.by = "condition",
         scale=TRUE, col.min = -4, col.max = 4, 
         dot.min = 0, dot.scale = 5, cols = c("blue","red")) + RotatedAxis() +
@@ -447,5 +468,9 @@ png("TEPA_plots/S05_tumorAdreMese_ScatterPlot.png", h = 3000, w = 4200, res = 30
 FeatureScatter(seuset_tumor, feature1 = "Adrenergic", feature2 = "Mesenchymal", pt.size = 0.0005)
 dev.off()
 
-
+pdf("TEPA_plots/S06_Ftl1_VlnPlot_Tumour.pdf", h = 6, w = 10)
+Idents(seuset_tumor) <- "celltypes"
+VlnPlot(seuset_tumor, features = "Ftl1", split.by = "condition", layer = "data", 
+        ncol = 2, pt.size = 0.000005)
+dev.off()
 

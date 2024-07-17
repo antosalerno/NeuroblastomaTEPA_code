@@ -65,16 +65,19 @@ getTopMarkers <- function(df = immune.markers, geneNr){
 
 library("EnhancedVolcano")
 
-plotVolcano <- function(clusters, res=NULL, type = "condition",
+plotVolcano <- function(clusters, res=NULL, type = "condition", file= NULL,
                         save = "", log2FC = 0.25, immune = TRUE, pval = 0.05){
   for (cluster in clusters){
     try({
       if (type == "condition"){
-        if(immune){
-          file=paste0("TEPA_results/S03_immuneCond_DEA_",gsub(" |/", "_", cluster),".csv")
-        } else {
-          file=paste0("TEPA_results/S05_tumorCond_DEA_",gsub(" |/", "_", cluster),".csv")
-        } 
+        if (is.null(file)){
+          if(immune){
+            file=paste0("TEPA_results/S03_immuneCond_DEA_",gsub(" |/", "_", cluster),".csv")
+          } else {
+            file=paste0("TEPA_results/S05_tumorCond_DEA_",gsub(" |/", "_", cluster),".csv")
+          } 
+        }
+        
         res <- read.csv(file, sep=",")
         rownames(res) <- res$X
         title = paste0(cluster,', TEPA vs. CTRL ')
@@ -99,7 +102,7 @@ plotVolcano <- function(clusters, res=NULL, type = "condition",
                          legendLabSize = 14,
                          legendIconSize = 4.0,
                          drawConnectors = TRUE,
-                         widthConnectors = 0.3,colConnectors = 'gray51', maxoverlapsConnectors = 80,
+                         widthConnectors = 0.3,colConnectors = 'gray51', maxoverlapsConnectors = Inf,
                          caption = paste0('Upregulated = ', nrow(res[res$avg_log2FC > log2FC&res$p_val_adj<= 0.05,]), ' genes',
                                           "\n",'Downregulated = ', nrow(res[res$avg_log2FC < -log2FC &res$p_val_adj<= 0.05,]), ' genes'))+ theme(plot.title = element_text(hjust = 0.5)) + coord_flip()
       ggsave(p, file=paste0("TEPA_plots/",save, "DEA_",sub(" ", "_", cluster),".png"), width = 30, height = 25, units = "cm")
@@ -109,12 +112,12 @@ plotVolcano <- function(clusters, res=NULL, type = "condition",
 
 # S04 - GSEA ####
 
-N1 <- c("Cebpb", "Il1b","Cxcl2","S100a8","S100a9","Ccl3", "Ccl4", "Ifitm1", "Ifitm2", "Ifitm3", "Ifitm6", 
+N1 <- c("Cebpb", "Il1b","Cxcl2","Cxcr2","S100a8","S100a9","Ccl3", "Ccl4", "Ifitm1", "Ifitm2", "Ifitm3", "Ifitm6", 
           "Acod1","Sell", "Prkcd","Il6ra","Retnlg","Il1r2","Mmp8", "Mmp9","Icam1","Hif1a",  
          "Tnf", "Myd88", "Fas", "Cxcl3", "Isg15", "Isg20", "Arg2", "Stat3", 
          "Il1a" , "Il15")
 
-N2 <- c("Tgfb1", "Tgfb1i1","Tgfb2", "Tgfb3", "Ccl2",  "Ccl17","Cxcl14", 
+N2 <- c("Tgfb1", "Ccl2",  "Ccl17","Cxcl14", 
         "Cxcl15",  "Il1r1", "Il2", "Il17a", "Mpo", "Slc27a2", "Arg1", 
         "Mrc1", "Chil3", "Elane", "Ctsg", "Retnla", "Siglecf")
 
@@ -127,7 +130,7 @@ M1 <- c("Il12a", "Il12b", "Tnf", "Cxcl10", "Tlr2", "Tlr4", "Fcgr3", "Fcgr4", "Fc
         "Cd80", "Cd86", "Il12a",  "Il6", "Il1a", "Ccl2", "Ccl3", "Ccl4", "Ccl5",
         "Cxcl9", "Cxcl10", "Ccr7", "Il1b", "Nos2", "Cxcl16", "Il23a")
 M2 <- c("Il10", "Ccl22", "Il4ra", "Il13ra1", "Chil3", "Cd163", "Tgfb1",
-        "Fcer2a", "Cd163", "Cxcr1", "Cxcr2", "Ccr2", "Arg1",  "Cd209a", "Mrc1", "Fcgr2b")
+        "Fcer2a", "Cd163", "Cxcr1", "Ccr2", "Arg1",  "Cd209a", "Mrc1", "Fcgr2b")
 
 # https://www.sciencedirect.com/science/article/pii/S1471490602023025
 
@@ -137,10 +140,22 @@ names(custom) <- c("N1 ANTI-TUMOR NEUTROPHILS", "N2 PRO-TUMOR NEUTROPHILS",
 
 copper_genes <- c("Slc31a1", "Atp7a", "Atp7b", "Sco1", "Cox11", "Steap3", "Commd1", "Mtf1", "Mtf2", "Sp1", "Sod1",
                   "Sod2", "Steap4", "Atox1", "Ccs", "Mt1", "Mt2", "Mt3", "Fdx1", "Lias", "Lipt1", "Dld", "Dlat",
-                  "Pdha1", "Pdhb",  "Gls", "Cdkn2a")
+                  "Pdha1", "Pdhb",  "Gls", "Cdkn2a", "Steap4", "Adam8", "Serpine1", "Trem1")
 
 copper_sign <- list(copper_genes)
 names(copper_sign) <- "COPPER METABOLISM"
+
+# Create gsea sets: named list having ontology term as a name and containing enriched genes
+sgsea <- function(sets){
+  fgsea_sets <- list()
+  
+  for (set in sets){
+    set$term <- as.character(set$term)
+    set <- set %>% split(x = .$gene, f = .$term)
+    fgsea_sets <- append(fgsea_sets, set)
+  }
+  return(fgsea_sets)
+}
 
 # @ version of clusterProfiler:: cnetplot
 networkPlotGSEA <- function(fgseaResPlot, ranked.genes, cluster, CNET_gene_cutoff = 6){
@@ -228,7 +243,6 @@ gseaRES <- function(clusters, markers = NULL, fgsea_sets, minSize = 12, adj = TR
           #file=paste0("TEPA_results/S03_immuneBulkDEA.csv")
           file=paste0("TEPA_results/S03_immuneCond_DEA_",gsub(" ", "_", cluster),".csv")
         } else if (input == "tumor"){
-          file=paste0("TEPA_results/S05_tumorBulkDEA.csv")
           #file=paste0("TEPA_results/S05_tumorCond_DEA_",gsub(" |/", "_", cluster),".csv")
         } else if (input == "nanoCond_gInf"){
             file = paste0("TEPA_results/N00_nanoCond_gInf_DEA.csv")
@@ -256,15 +270,7 @@ gseaRES <- function(clusters, markers = NULL, fgsea_sets, minSize = 12, adj = TR
       if (adj) {fgseaRes$padj = p.adjust(fgseaRes$pval, method='BH')}
       fgseaRes <- fgseaRes[fgseaRes$padj <= 0.1] %>% arrange(desc(NES))
       fgseaRes <- as.data.frame(fgseaRes)
-      
-      # enr <- plotEnrichment(fgsea_sets[["N1 ANTI-TUMOR NEUTROPHILS"]],
-      #                ranked.genes) + labs(title="N1 ANTI-TUMOR NEUTROPHILS") + geom_line(color="#045A8D")
-      # #NES = -1.7
-      # 
-      # file=paste0("TEPA_final_figures/S05_N1_NEUTROPHILS.pdf")
-      # ggsave(enr, file = file, width = 10, height = 10, units = "cm")
-      
-    
+
       # Generate enrichment plots 
       if (nrow(fgseaRes) > 0) {
         fgseaResPlot <- fgseaRes %>% split(x = .$leadingEdge, 
@@ -374,7 +380,7 @@ gseaJointNet <- function (clusters, immune = TRUE, save=""){
     if(immune){
       file=paste0("TEPA_results/S03_immuneCond_DEA_",gsub(" ", "_", cluster),".csv")
     } else {
-      file=paste0("TEPA_results/S07_tumorCond_DEA_",gsub(" ", "_", cluster),".csv")
+      file=paste0("TEPA_results/S05_tumorCond_DEA_",gsub(" ", "_", cluster),".csv")
     } 
     res <- read.csv(file = file, sep=",")
     ranked.genes.df<- res %>%
@@ -486,6 +492,8 @@ sign_dotPlot <- function(obj, sign, immune = TRUE, legend = TRUE, k = 3, cluster
   
 }
 
+library(ComplexHeatmap)
+library(circlize)
 
 sign_avgHeatMap <- function(obj, sign, immune = TRUE, 
                             legend = TRUE, k = 3, cluster = TRUE,
@@ -497,7 +505,7 @@ sign_avgHeatMap <- function(obj, sign, immune = TRUE,
     assays = "RNA",
     features = sign,
     group.by = c("celltypes", "condition"),
-    layer = "data")$RNA
+    layer = "scale.data")$RNA
   
   my_data_matrix = as.matrix(my_data)
   rownames(my_data_matrix) = rownames(my_data)
@@ -518,18 +526,21 @@ sign_avgHeatMap <- function(obj, sign, immune = TRUE,
     annotation_colors <- list("celltypes" = cellt_col,
                               "condition" = cond_col)
   }
+
   
   ha = HeatmapAnnotation(df = as.data.frame(ordered_meta_data),
-                         show_legend = legend,
+                         #show_legend = legend,
                          show_annotation_name = TRUE,
-                         col = annotation_colors,
-                         annotation_legend_param = list(
-                           celltypes = list(
-                             labels = levels(obj$celltypes)),
-                           title = "celltypes"
-                         ))
+                         col = annotation_colors
+                         # annotation_legend_param = list(
+                         #   celltypes = list(
+                         #     labels = levels(obj$celltypes)),
+                         #   title = "celltypes")
+                         )
+
   
-  col_fun = colorRamp2(c(-2, 0, 2), c("blue", "white", "red"))
+  col_fun = colorRamp2(c(min(my_data_matrix, na.rm = TRUE), 0, max(my_data_matrix, na.rm = TRUE)), 
+                       c("blue", "white", "red"))
   
   Heatmap(
     my_data_matrix,
@@ -556,4 +567,102 @@ sign_avgHeatMap <- function(obj, sign, immune = TRUE,
   )
   
 }
+
+
+
+sign_avgLogFCHeatMap <- function(obj, sign, immune = TRUE, condition = TRUE,
+                            legend = TRUE, k = k, cluster = cluster, celltype = 'all',
+                            w = 25, h = 30){
+  k=3
+  cluster=TRUE
+  obj <- JoinLayers(obj, assay = "RNA")
+  
+  if (immune){
+    annotation_colors <- list("celltypes" = cellt_col[1:13],
+                              "condition" = cond_col)
+  } else{
+    annotation_colors <- list("celltypes" = cellt_col,
+                              "condition" = cond_col)
+  }
+
+  
+  ## 2 - Log2FC for condition DEA per cell type
+
+    library(readxl)
+    filename = "TEPA_results/S03_immuneCond_DEA.xlsx"
+    
+    sheet_names <- excel_sheets(filename)
+    
+    # Read all sheets into a list of data frames
+    all_sheets <- list()
+    for(sheet in sheet_names) {
+      data <- read_excel(filename, sheet = sheet)
+      colnames(data) <- c("gene", "p_val", "avg_log2FC", "pct.1", "pct.2", "p_val_adj")
+      data$avg_log2FC <- as.numeric(data$avg_log2FC)  # Convert avg_log2FC to numeric
+      all_sheets[[sheet]] <- data
+    }
+    
+    # Filter by p.adj < 0.05
+    
+    # Combine all data frames into one
+    DEA_data <- do.call(rbind, lapply(names(all_sheets), function(sheet) {
+      df <- all_sheets[[sheet]]
+      df$cluster <- sheet  # Add a column for the cell type (sheet name)
+      df[, c("gene","cluster", "avg_log2FC")]
+    }))
+    
+    # Ensure there are no duplicates and handle them if necessary
+    DEA_data <- DEA_data[!duplicated(DEA_data), ]
+
+    # Pivot data for heatmap
+    heatmap_data <- pivot_wider(DEA_data, names_from = "cluster", values_from = "avg_log2FC")
+    
+    # Convert to matrix
+    heatmap_matrix <- as.matrix(heatmap_data[,-1])
+    # Replace NA values with 0
+    heatmap_matrix[is.na(heatmap_matrix)] <- 0
+    heatmap_matrix <- apply(heatmap_matrix, 2, as.numeric)
+    rownames(heatmap_matrix) <- heatmap_data$gene
+    heatmap_sign <- heatmap_matrix[sign,]
+    
+    
+    if (celltype != 'all'){
+      cluster_col <- "purple"
+      names(cluster_col) <- celltype
+      heatmap_sign <- heatmap_sign[,celltype]
+      col_annotation <- HeatmapAnnotation(
+        df = data.frame(Type= list(labels = as.factor(celltype))),
+        col = annotation_colors)
+    } else {
+      sample_annotation <- data.frame(
+        Type = list(labels = as.factor(levels(obj$celltypes)[-14]))
+      )
+      
+      # Create a HeatmapAnnotation object
+      col_annotation <- HeatmapAnnotation(
+        df = sample_annotation,
+        col = annotation_colors)
+    }
+    
+
+    Heatmap(heatmap_sign, 
+            name = "log2FC", 
+            show_row_names = TRUE, 
+            show_column_names = TRUE,
+            cluster_rows = cluster,
+            cluster_columns = cluster,
+            use_raster = F,
+            top_annotation = col_annotation,
+            colorRamp2(c(min(heatmap_sign, na.rm = TRUE), 0, max(heatmap_sign, na.rm = TRUE)), 
+                       c("blue", "white", "red")))
+  
+  
+}
+
+
+
+
+
+
+
 

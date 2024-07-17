@@ -2,10 +2,14 @@
 ## author: Antonietta Salerno
 ## date: 19/12/2022
 
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("msigdb")
+
 library("fgsea")
 library(dplyr)
 library(devtools)
-library(msigdbr)
+library(msigdb)
 library("Seurat")
 library(readr)
 library(stringr)
@@ -17,7 +21,7 @@ library(GetoptLong)
 library(magick)
 library(tidyverse)
 library(ComplexHeatmap)
-# install.packages("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project/TEPA_data/org.Mm.eg.db_3.8.2.tar.gz") #download from source
+#install.packages("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project/TEPA_data/org.Mm.eg.db_3.8.2.tar.gz") #download from source
 library(org.Mm.eg.db)
 
 #library(pheatmap)
@@ -28,57 +32,46 @@ seuset_immune <- LoadSeuratRds("TEPA_results/S03_immuneDiff.Rds")
 clusters = unique(seuset_immune@meta.data$celltypes)
 immune.markers <- read.csv("TEPA_results/S03_DEA_clusterMarkers.csv")
 
-
 #### 1 - Select the gene set collections of interest #### 
-# HALLMARK_GLYCOLYSIS
 
 # gene sets downloaded from source
-sets1 <- read.gmt("TEPA_data/mh.all.v2022.1.Mm.symbols.gmt") # Mouse hallmark
-sets2 <- read.gmt("TEPA_data/GOBP_CELL_MOTILITY.v2023.1.Mm.gmt")
-sets3 <- read.gmt("TEPA_data/REACTOME_NEUTROPHIL_DEGRANULATION.v2022.1.Mm.gmt") # The only Reactome pathway we're interested in
-sets4 <- read.gmt("TEPA_data/REACTOME_ENOS_ACTIVATION.v2023.1.Mm.gmt") # REACTOME_ENOS_ACTIVATION
-sets5 <- read.gmt("TEPA_data/REACTOME_PENTOSE_PHOSPHATE_PATHWAY.v2023.1.Mm.gmt")
-sets6 <- read.gmt("TEPA_data/WP_OXIDATIVE_STRESS_AND_REDOX_PATHWAY.v2023.1.Mm.gmt")
-sets7 <- read.gmt("TEPA_data/WP_OXIDATIVE_STRESS_RESPONSE.v2023.1.Mm.gmt")
-sets8 <- read.gmt("TEPA_data/WP_OXIDATIVE_DAMAGE_RESPONSE.v2023.1.Mm.gmt")
-sets9 <- read.gmt("TEPA_data/REACTOME_CITRIC_ACID_CYCLE_TCA_CYCLE.v2023.1.Mm.gmt")
-sets10 <- read.gmt("TEPA_data/REACTOME_DNA_DOUBLE_STRAND_BREAK_RESPONSE.v2023.1.Mm.gmt")
 
-sets1$term <- as.character(sets1$term)
-sets2$term <- as.character(sets2$term)
-sets3$term <- as.character(sets3$term)
-sets4$term <- as.character(sets4$term)
-sets5$term <- as.character(sets5$term)
-sets6$term <- as.character(sets6$term)
-sets7$term <- as.character(sets7$term)
-sets8$term <- as.character(sets8$term)
-sets9$term <- as.character(sets9$term)
-sets10$term <- as.character(sets10$term)
+sets <- lapply(paste0("TEPA_data/", c(
+  "mh.all.v2022.1.Mm.symbols.gmt",
+  "REACTOME_NEUTROPHIL_DEGRANULATION.v2022.1.Mm.gmt",
+  "GOBP_CELL_MOTILITY.v2023.2.Mm.gmt"
+  # "GOBP_NEUTROPHIL_ACTIVATION_INVOLVED_IN_IMMUNE_RESPONSE.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_CHEMOTAXIS.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_DEGRANULATION.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_DIFFERENTIATION.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_EXTRAVASATION.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_MEDIATED_CYTOTOXICITY.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_MEDIATED_IMMUNITY.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_MIGRATION.v2023.2.Mm.gmt",
+  # "GOBP_CELLULAR_RESPONSE_TO_COPPER_ION.v2023.2.Mm.gmt",
+  # "GOBP_COPPER_ION_HOMEOSTASIS.v2023.2.Mm.gmt",
+  # "GOBP_COPPER_ION_IMPORT.v2023.2.Mm.gmt",
+  # "GOBP_COPPER_ION_TRANSMEMBRANE_TRANSPORT.v2023.2.Mm.gmt",
+  # "GOBP_COPPER_ION_TRANSPORT.v2023.2.Mm.gmt",
+  # "GOBP_DETOXIFICATION_OF_COPPER_ION.v2023.2.Mm.gmt",
+  # "GOBP_RESPONSE_TO_COPPER_ION.v2023.2.Mm.gmt",
+  # "GOMF_COPPER_CHAPERONE_ACTIVITY.v2023.2.Mm.gmt",
+  # "GOMF_COPPER_ION_BINDING.v2023.2.Mm.gmt",
+  # "GOMF_COPPER_ION_TRANSMEMBRANE_TRANSPORTER_ACTIVITY.v2023.2.Mm.gmt"
+)), read.gmt)
 
-sets1 <- sets1 %>% split(x = .$gene, f = .$term)
-sets2 <- sets2 %>% split(x = .$gene, f = .$term)
-sets3 <- sets3 %>% split(x = .$gene, f = .$term)
-sets4 <- sets4 %>% split(x = .$gene, f = .$term)
-sets5 <- sets5 %>% split(x = .$gene, f = .$term)
-sets6 <- sets6 %>% split(x = .$gene, f = .$term)
-sets7 <- sets7 %>% split(x = .$gene, f = .$term)
-sets8 <- sets8 %>% split(x = .$gene, f = .$term)
-sets9 <- sets9 %>% split(x = .$gene, f = .$term)
-sets10 <- sets10 %>% split(x = .$gene, f = .$term)
-#sets3 <- sets3 %>% split(x = .$gene_symbol, f = .$gs_name)
+# Copper metabolism 
+# "REACTOME_ENOS_ACTIVATION.v2023.1.Mm.gmt", # REACTOME_ENOS_ACTIVATION
+# "REACTOME_PENTOSE_PHOSPHATE_PATHWAY.v2023.1.Mm.gmt",,
+# "TEPA_data/WP_OXIDATIVE_STRESS_AND_REDOX_PATHWAY.v2023.1.Mm.gmt",
+# "WP_OXIDATIVE_STRESS_RESPONSE.v2023.1.Mm.gmt",
+# "WP_OXIDATIVE_DAMAGE_RESPONSE.v2023.1.Mm.gmt",
+# "REACTOME_CITRIC_ACID_CYCLE_TCA_CYCLE.v2023.1.Mm.gmt",
+# "REACTOME_DNA_DOUBLE_STRAND_BREAK_RESPONSE.v2023.1.Mm.gmt"
 
-fgsea_sets <- list()
-fgsea_sets <- append(sets1, sets2)
-fgsea_sets <- append(fgsea_sets, sets3)
-fgsea_sets <- append(fgsea_sets, sets4)
-fgsea_sets <- append(fgsea_sets, sets5)
-fgsea_sets <- append(fgsea_sets, sets6)
-fgsea_sets <- append(fgsea_sets, sets7)
-fgsea_sets <- append(fgsea_sets, sets8)
-fgsea_sets <- append(fgsea_sets, sets9)
-fgsea_sets <- append(fgsea_sets, sets10)
-fgsea_sets <- append(fgsea_sets, custom)
-fgsea_sets <- append(fgsea_sets, copper_sign)
+# Create named list with ontology term and containing genes
+sgsea <- fgsea_sets(sets)
+
 
 #### 2 - Add custom gene set signatures ####
 # Search all isoforms of gene of interest
@@ -132,7 +125,7 @@ dev.off()
 
 #### 3 - Run the custom gsea function ####
 clusters = unique(levels(seuset_immune$celltypes))
-save = "S04_immuneEnrichment_"
+save = "S04_immuneEnrichment"
 gseaRES(clusters, fgsea_sets = fgsea_sets, save = save, minSize = 6, adj = TRUE, out = "pdf")
 
 #gseaPlotRes(clusters)
@@ -143,7 +136,7 @@ save = "S04_immuneJointNet"
 gseaByCellType <- gseaJointNet(clusters, save = save)
 
 # If you want to filter out some gene set manually!
-df_gseaCT <- read.csv(paste0("TEPA_results/", save, "SHORT3.csv"), sep = ";")
+df_gseaCT <- read.csv(paste0("TEPA_results/", save, "SHORT_copper.csv"), sep = ";")
 gseaByCellType@compareClusterResult <- df_gseaCT
 
 cnet <- cnetplot(gseaByCellType, showCategory=6, 
@@ -156,12 +149,12 @@ ggsave(cnet, file = file, width = 55, height = 45, units = "cm")
 
 #### 5 - Clustered diverging bar plot all cell types
 
-save = "S04_immuneJointBarplot3"
+save = "S04_immuneJointBarplot"
 gseaByType(clusters, save = save)
 
 fgseaResByType = read.csv(paste0("TEPA_results/", save, "SHORT.csv"), sep = ";")
 b <- barPlotGSEA(fgseaResByType, byType = TRUE)
-ggsave(b, file=paste0("TEPA_plots/S04_barplotCellTypesEnriched3.pdf"),
+ggsave(b, file=paste0("TEPA_plots/S04_barplotCellTypesEnriched.pdf"),
        width = 40, height = 20, units = "cm", limitsize = F, dpi = 500)
 
 SaveSeuratRds(seuset_immune, "TEPA_results/S04_immuneDiff.Rds")
