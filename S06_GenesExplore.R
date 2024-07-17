@@ -9,8 +9,8 @@ library("ggpubr")
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
-seuset_immune <- LoadSeuratRds("TEPA_results/S03_immuneDiff.Rds")
-seuset_full<- LoadSeuratRds("TEPA_results/S08_seusetFull.Rds")
+seuset_immune <- LoadSeuratRds("TEPA_results/S03_immuneDiff.SeuratRds")
+seuset_full<- LoadSeuratRds("TEPA_results/S08_seusetFull.SeuratRds")
 immune.markers <- read.csv("TEPA_results/02_DEA_clusterMarkers.csv")
 
 DefaultAssay(seuset_immune) <- "RNA"

@@ -11,8 +11,8 @@ library(GetoptLong)
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
-seuset_immune <- LoadSeuratRds("TEPA_results/S04_immuneDiff.Rds")
-seuset_tumor <- LoadSeuratRds("TEPA_results/S05_seusetTumorClu.Rds")
+seuset_immune <- LoadSeuratRds("TEPA_results/S02_immuneAnn.SeuratRds")
+seuset_tumor <- LoadSeuratRds("TEPA_results/S00_tumor.Rds")
 
 seuset_full <- merge(seuset_immune, y = seuset_tumor, 
                      add.cell.ids = c("immune", "tumor"), 
@@ -27,14 +27,14 @@ seuset_full$condition <- factor(seuset_full$condition,
 
 seuset_full@meta.data$celltypes <- factor(seuset_full@meta.data$celltypes,
                                             levels=c("Cd4+ Naive T cells","Cd4+ Memory T cells",  
-                                                     "Cd8+ Naive-Memory T cells","Cd8+ NkT-like cells" , 
+                                                     "Cd8+ Naive-Memory T cells","Cd8+ effector T cells" , 
                                                      "Gamma-delta T cells","DN Regulatory T cells" , 
                                                      "Natural killer cells", 
                                                      "B cells" , "Dendritic cells", "Macrophages", 
                                                      "Basophils", "Eosinophils", "Neutrophils", "Tumor"  
                                             ))
 
-SaveSeuratRds(seuset_full, "TEPA_results/S08_seusetFull.Rds")
+SaveSeuratRds(seuset_full, "TEPA_results/S08_seusetFull.SeuratRds")
 
 
 #### Create a signature of copper-related genes ####

@@ -100,7 +100,7 @@ celltypes_scores = celltypes_scores[order(celltypes_scores$cluster),]
 celltypes_scores[3, "type"] <- "Cd4+ Naive T cells"
 celltypes_scores[4, "type"] <- "Cd4+ Memory T cells" #"Cd4+ Naive T cells"
 celltypes_scores[5, "type"] <- "Cd8+ Naive-Memory T cells" #"Cd4+ Memory T cells"
-celltypes_scores[6, "type"] <- "Cd8+ NkT-like cells"
+celltypes_scores[6, "type"] <- "Cd8+ effector T cells"
 celltypes_scores[7, "type"] <- "DN Regulatory T cells" #"Cd8+ Naive T cells"
 celltypes_scores[8, "type"] <- "Cd4+ Naive T cells" #"Cd8+ NkT-like cells"
 celltypes_scores[10, "type"] <- "Macrophages" # or macrophages
@@ -129,7 +129,7 @@ levels(Idents(seuset_immune)) # now 14 clusters rather than 15
 
 seuset_immune@meta.data$celltypes <- factor(seuset_immune@meta.data$celltypes,
                                   levels=c("Cd4+ Naive T cells","Cd4+ Memory T cells",  
-                                           "Cd8+ Naive-Memory T cells","Cd8+ NkT-like cells" , 
+                                           "Cd8+ Naive-Memory T cells","Cd8+ effector T cells" , 
                                            "Gamma-delta T cells","DN Regulatory T cells" , 
                                            "Natural killer cells", 
                                            "B cells" , "Dendritic cells", "Macrophages", 
@@ -137,7 +137,8 @@ seuset_immune@meta.data$celltypes <- factor(seuset_immune@meta.data$celltypes,
                                   ))
 Idents(seuset_immune) <- "celltypes"
 options(ggrepel.max.overlaps = Inf)
-png("TEPA_plots/S02_umapAnn.png", w = 3000, h = 3000, res = 300)
+pdf("TEPA_plots/S02_umapAnn.pdf", w = 10, h = 12)
+#png("TEPA_plots/S02_umapAnn.png", w = 3000, h = 3000, res = 300)
 p <- DimPlot(object = seuset_immune, pt.size = 0.5, reduction = 'umap', ncol = 1,
              group.by = "celltypes", label = FALSE,cols = cellt_col) +
   ggtitle("Cell types in NB Control and Treated samples") +
@@ -145,8 +146,9 @@ p <- DimPlot(object = seuset_immune, pt.size = 0.5, reduction = 'umap', ncol = 1
 LabelClusters(p, id = "celltypes", size = 5, repel = T,  box.padding = 1)
 dev.off()
 
-png("TEPA_plots/S02_umapCondAnn.png", w = 4000, h = 2000, res = 300)
-#pdf(qq("TEPA_final_figures/S02_umapCondAnn.pdf"), w = 12, h = 6)
+
+#png("TEPA_plots/S02_umapCondAnn.png", w = 4000, h = 2000, res = 300)
+pdf("TEPA_plots/S02_umapCondAnn.pdf", w = 12, h = 6)
 pt1 <- DimPlot(object = seuset_immune, pt.size = 0.08, reduction = 'umap', ncol = 2,
         group.by = "celltypes", split.by= "condition", label = FALSE, cols = cellt_col) +
   ggtitle("") +
@@ -154,15 +156,47 @@ pt1 <- DimPlot(object = seuset_immune, pt.size = 0.08, reduction = 'umap', ncol 
 LabelClusters(pt1, id = "celltypes", size = 2.8, repel = T)
 dev.off()
 
+#png("TEPA_plots/S02_umapCondAnn.png", w = 4000, h = 2000, res = 300)
+pdf("TEPA_plots/S02_umapSampleType.pdf", w = 12, h = 6)
+pt1 <- DimPlot(object = seuset_immune, pt.size = 0.08, reduction = 'umap', ncol = 2,
+               group.by = "celltypes", split.by= "sampleType", label = FALSE, cols = cellt_col) +
+  ggtitle("") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+LabelClusters(pt1, id = "celltypes", size = 2.8, repel = T)
+dev.off()
+
+### Save cell type proportions by gene to use the dataset as annotation for spatial data ####
+
+expression_matrix <- seuset_immune@assays$integrated@data
+# Convert the expression matrix to a data frame and add cell type information
+expression_df <- as.data.frame(t(as.matrix(expression_matrix)))
+expression_df$celltype <- seuset_immune$celltypes
+
+# Aggregate the expression data by cell type
+aggregated_expression <- expression_df %>%
+  group_by(celltype) %>%
+  summarise(across(everything(), sum))
+
+# Remove the cell type column from the data frame
+aggregated_expression_matrix <- as.matrix(aggregated_expression %>% select(-celltype))
+rownames(aggregated_expression_matrix) <- aggregated_expression$celltype
+
+write.csv(t(aggregated_expression_matrix), "TEPA_results/S02_cellbygeneProp.csv")
+
 ### Bar Plot with proportions
 pt <- table(Idents(seuset_immune), seuset_immune$condition)
 pt <- as.data.frame(pt)
 pt$Var1 <- as.character(pt$Var1)
 
-pt$Var1 <- factor(pt$Var1,levels=levels(seuset_immune$celltypes)) # Look the difference in the factors order
+# Normalise by the size of the tumour
+pt$Freq[pt$Var2 == "Control"] <- pt$Freq[pt$Var2 == "Control"]/3.63
+pt$Freq[pt$Var2 == "Treatment"] <- pt$Freq[pt$Var2 == "Treatment"]/3.41
 
-png(paste0("TEPA_plots/S02_condAnnClusterFreq.png"), w=2500,h=2500, res=300)
-#pdf(qq("TEPA_final_figures/S02_condAnnClusterFreq.pdf"), w = 6, h = 8)
+pt$Var1 <- factor(pt$Var1,levels=levels(seuset_immune$celltypes)) # Look the difference in the factors order
+write.csv(pt, "TEPA_results/S02_ClusterFreq.csv")
+
+#png(paste0("TEPA_plots/S02_condAnnClusterFreq.png"), w=2500,h=2500, res=300)
+pdf("TEPA_plots/S02_condAnnClusterFreq.pdf", w = 6, h = 8)
 ggplot(pt, aes(x = Var2, y = Freq, fill = factor(Var1))) +
   theme_bw(base_size = 15) +
   geom_col(position = "fill", width = 0.5) +
@@ -173,6 +207,19 @@ ggplot(pt, aes(x = Var2, y = Freq, fill = factor(Var1))) +
   scale_fill_manual(values = cellt_col) +
   theme(legend.title = element_blank()) & NoLegend()
 dev.off()
+
+library(viridis)
+pdf("TEPA_plots/S02_condAnnClusterFreq_byType.pdf", w = 14, h = 16)
+ggplot(pt, aes(fill=Var2, y=Freq, x=Var2)) + 
+  geom_bar(position="dodge", stat="identity") +
+  scale_fill_viridis(discrete = T, option = "E") +
+  ggtitle("Cell types counts in TEPA vs Control") +
+  facet_wrap(~Var1, scales = "free") +
+  theme(legend.position="none") +
+  xlab("Condition")+
+  ylab("Cell type")
+dev.off()
+
 
 ###  Bar Plot with percentage
 
@@ -191,5 +238,7 @@ barplot(data_percentage, col=cellt_col, border="white",
 dev.off()
 
 SaveSeuratRds(seuset_immune, "TEPA_results/S02_immuneAnn.SeuratRds")
+
+
 
 

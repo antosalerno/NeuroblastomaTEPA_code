@@ -61,7 +61,7 @@ plot3 <- FeatureScatter(immune, feature1 = "nCount_RNA", feature2 = "nFeature_RN
 plot1 + plot2 + plot3  # We can spot two separate data clouds because of the bimodal distribution of the data: tumour vs immune cells
 dev.off()
 
-SaveSeuratRds(immune,"TEPA_results/S01_immuneFilt.Rds", overwrite = TRUE)
+SaveSeuratRds(immune,"TEPA_results/S01_immuneFilt.Rds")
 
 #### 2 - Batch effect correction ####
 
