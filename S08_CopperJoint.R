@@ -11,7 +11,8 @@ library(GetoptLong)
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
-seuset_immune <- LoadSeuratRds("TEPA_results/S03_immuneDiff.Rds")
+
+seuset_immune <- LoadSeuratRds("TEPA_results/S02_immuneAnn.SeuratRds")
 seuset_tumor <- LoadSeuratRds("TEPA_results/S00_tumor.Rds")
 
 seuset_full <- merge(seuset_immune, y = seuset_tumor, 

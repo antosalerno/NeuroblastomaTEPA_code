@@ -14,6 +14,7 @@ seuset_full<- LoadSeuratRds("TEPA_results/S08_seusetFull.SeuratRds")
 immune.markers <- read.csv("TEPA_results/S03_DEA_clusterMarkers.csv")
 immune.markers <- read.csv("TEPA_results/S03_immuneCond_DEA.xlsx")
 
+
 DefaultAssay(seuset_immune) <- "RNA"
 
 # Search all isoforms of gene of interest

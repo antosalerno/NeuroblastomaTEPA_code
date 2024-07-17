@@ -233,12 +233,14 @@ dev.off() # It looks like there's no pattern
 # Check in parallel expression of DEA genes in the different cell types
 seuset_immune <- LoadSeuratRds("TEPA_results/S04_immuneDiff.Rds")
 
+
 # 5.2 Infiltration vs Non-Infiltration given Treatment
 
 Idents(seuset_nano) <- "Infiltration"
 seuset_nanoTEPA <- subset(seuset_nano, Condition == "Treatment")
 
 seuset_nanoTEPA@assays$GeoMx@layers$scale.data <- scale(seuset_nanoTEPA@assays$GeoMx@layers$counts)
+
 seuset_nanoTEPA <- FindVariableFeatures(seuset_nanoTEPA, selection.method = "vst")
 
 res <- FindMarkers(seuset_nanoTEPA, ident.1 = "T", ident.2 = "F", slot="counts",
@@ -247,176 +249,6 @@ res <- FindMarkers(seuset_nanoTEPA, ident.1 = "T", ident.2 = "F", slot="counts",
 res$p_val_adj = p.adjust(res$p_val, method='BH')
 write.csv(res, file=paste0("TEPA_results/N00_nanoInf_gCond_DEA.csv"))
 
-log2FC = 0.5
-save = "N00_nanoInf_gCond_"
-
-p <- EnhancedVolcano(res, subtitle = "",
-                     #selectLab = markers,
-                     lab = rownames(res),
-                     x = 'avg_log2FC',
-                     y = 'p_val_adj',
-                     xlim = c(-3.5, 6),
-                     ylim = c(0, 9),
-                     title = "DEA Infiltrated vs Non-Infiltrated TME (TEPA-treated ROIs)",
-                     pCutoff = 0.05, 
-                     FCcutoff = log2FC,
-                     labFace = "bold",
-                     labSize = 4,
-                     col = c('lightgrey', 'pink', 'lightblue', 'salmon'),
-                     colAlpha = 4/5,
-                     legendLabSize = 14,
-                     legendIconSize = 4.0,
-                     drawConnectors = TRUE,
-                     widthConnectors = 0.3,
-                     colConnectors = 'gray51', maxoverlapsConnectors = 40,
-                     caption = paste0('Upregulated = ', nrow(res[res$avg_log2FC>log2FC&res$p_val_adj<=0.05,]), ' genes',
-                                      "\n",'Downregulated = ', nrow(res[res$avg_log2FC< -log2FC&res$p_val_adj<=0.05,]), ' genes'))+ theme(plot.title = element_text(hjust = 0.5)) + coord_flip()
-#ggsave(p, file=paste0("TEPA_plots/", save, "DEA.png"), width = 30, height = 25, units = "cm")
-ggsave(p, file=paste0("TEPA_final_figures/", save, "DEA2.pdf"), width = 30, height = 25, units = "cm")
-
-# ZNRF1 involved in ubiquitination of EGFR
-# Mt2 down
-
-ranked.genes<- res %>%
-  filter(p_val_adj < 0.1) %>%
-  arrange(desc(avg_log2FC))
-ranked.genes <- rownames(ranked.genes)[!is.na(rownames(ranked.genes))]
-
-png(paste0("TEPA_plots/",save,"DotPlot.png"), h = 2000, w = 2500, res = 300)
-Idents(seuset_immune) <- "celltypes"
-DotPlot(object = seuset_immune, features = ranked.genes[1:30], 
-        scale=TRUE, dot.scale = 5,
-        assay = "RNA", cols = c("blue","red")) + RotatedAxis() + coord_flip() +
-  theme(axis.text.x = element_text(size=7), axis.text.y = element_text(size=7))
-dev.off()
-
-png(paste0("TEPA_plots/",save,"Heatmap.png"), h = 4000, w = 6000, res = 300)
-Idents(seuset_nano) <- "Infiltration"
-DoHeatmap(object = subset(seuset_nanoTEPA, downsample = 500), size = 6, 
-          group.by = "Infiltration",
-          features = head(ranked.genes, 30)) +
-  scale_fill_gradientn(colors = c("blue", "black", "red")) + 
-  theme(axis.text = element_text(size=15)) + NoLegend()
-dev.off()
-
-
-# 5.4 Treatment vs Control given Infiltration
-
-seuset_nanoINF@assays$GeoMx@layers$scale.data <- scale(seuset_nanoINF@assays$GeoMx@layers$counts)
-seuset_nanoINF <- FindVariableFeatures(seuset_nanoINF, selection.method = "vst")
-
-Idents(seuset_nano) <- "Condition"
-seuset_nanoINF <- subset(seuset_nano, Infiltration == "T")
-res <- FindMarkers(seuset_nanoINF, ident.1 = "Treatment", ident.2 = "Control",
-                   only.pos = FALSE, verbose = FALSE, slot="counts",
-                   #latent.vars="Core",
-                   test.use="negbinom")
-res$p_val_adj = p.adjust(res$p_val, method='BH')
-write.csv(res, file=paste0("TEPA_results/N00_nanoCond_gInf_DEA.csv"))
-
-log2FC = 0.5
-save = "N00_nanoCond_gInf"
-
-p <- EnhancedVolcano(res, subtitle = "",
-                     #selectLab = markers,
-                     lab = rownames(res),
-                     x = 'avg_log2FC',
-                     y = 'p_val_adj',
-                     xlim = c(-2.5, 2.5),
-                     ylim = c(0, 10),
-                     title = "DEA Treatment vs Control (Infiltrated ROIs)",
-                     pCutoff = 0.05, 
-                     FCcutoff = log2FC,
-                     labFace = "bold",
-                     labSize = 4,
-                     col = c('lightgrey', 'pink', 'lightblue', 'salmon'),
-                     colAlpha = 4/5,
-                     legendLabSize = 14,
-                     legendIconSize = 4.0,
-                     drawConnectors = TRUE,
-                     widthConnectors = 0.3,
-                     colConnectors = 'gray51', maxoverlapsConnectors = 80,
-                     caption = paste0('Upregulated = ', nrow(res[res$avg_log2FC>log2FC&res$p_val_adj<=0.05,]), ' genes',
-                                      "\n",'Downregulated = ', nrow(res[res$avg_log2FC< -log2FC&res$p_val_adj<=0.05,]), ' genes'))+ theme(plot.title = element_text(hjust = 0.5)) + coord_flip()
-#ggsave(p, file=paste0("TEPA_plots/", save, "DEA.png"), width = 30, height = 25, units = "cm")
-ggsave(p, file=paste0("TEPA_final_figures/", save, "DEA2.pdf"), width = 30, height = 25, units = "cm")
-
-ranked.genes<- res %>%
-  filter(p_val_adj < 0.1) %>%
-  arrange(desc(avg_log2FC))
-ranked.genes <- rownames(ranked.genes)[!is.na(rownames(ranked.genes))]
-
-png(paste0("TEPA_plots/",save,"DotPlot.png"), h = 2000, w = 2500, res = 300)
-DotPlot(object = seuset_immune, features = ranked.genes[1:30], 
-        scale=TRUE, dot.scale = 5, 
-        assay = "RNA", cols = c("blue","red")) + RotatedAxis() + coord_flip() +
-  theme(axis.text.x = element_text(size=7), axis.text.y = element_text(size=7))
-dev.off()
-
-png(paste0("TEPA_plots/",save,"Heatmap.png"), h = 4000, w = 6000, res = 300)
-Idents(seuset_nanoINF) <- "Condition"
-DoHeatmap(object = subset(seuset_nanoINF, downsample = 500), size = 6, 
-          features = head(ranked.genes, 40)) +
-  scale_fill_gradientn(colors = c("blue", "black", "red")) + 
-  theme(axis.text = element_text(size=15)) + NoLegend() +
-  theme(plot.margin = margin(2,2,1.5,1.2, "cm"))
-dev.off()
-
-# 5.5 Treatment vs Control
-
-Idents(seuset_nano) <- "Condition"
-res <- FindMarkers(seuset_nano, ident.1 = "Treatment", ident.2 = "Control",
-                   only.pos = FALSE, verbose = FALSE,
-                   #latent.vars="Core",
-                   test.use="negbinom")
-res$p_val_adj = p.adjust(res$p_val, method='BH')
-write.csv(res, file=paste0("TEPA_results/N00_nanoCond_DEA.csv"))
-
-log2FC = 0.5
-save = "N00_nanoCond"
-
-p <- EnhancedVolcano(res, subtitle = "",
-                     #selectLab = markers,
-                     lab = rownames(res),
-                     x = 'avg_log2FC',
-                     y = 'p_val_adj',
-                     xlim = c(-2.5, 2.5),
-                     title = "DEA Treatment vs Control",
-                     pCutoff = 0.05, 
-                     FCcutoff = log2FC,
-                     labFace = "bold",
-                     labSize = 4,
-                     col = c('lightgrey', 'pink', 'lightblue', 'salmon'),
-                     colAlpha = 4/5,
-                     legendLabSize = 14,
-                     legendIconSize = 4.0,
-                     drawConnectors = TRUE,
-                     widthConnectors = 0.3,colConnectors = 'gray51', maxoverlapsConnectors = 80,
-                     caption = paste0('Upregulated = ', nrow(res[res$avg_log2FC>log2FC&res$p_val_adj<=0.05,]), ' genes',
-                                      "\n",'Downregulated = ', nrow(res[res$avg_log2FC< -log2FC&res$p_val_adj<=0.05,]), ' genes'))+ theme(plot.title = element_text(hjust = 0.5)) + coord_flip()
-ggsave(p, file=paste0("TEPA_plots/", save, "DEA2.png"), width = 30, height = 25, units = "cm")
-
-ranked.genes<- res %>%
-  filter(p_val_adj < 0.05) %>%
-  arrange(desc(avg_log2FC)) %>%
-  filter(avg_log2FC > abs(0.3))
-ranked.genes <- rownames(ranked.genes)[!is.na(rownames(ranked.genes))]
-
-png(paste0("TEPA_plots/",save,"DotPlot.png"), h = 2000, w = 2500, res = 300)
-Idents(seuset_immune) <- "celltypes"
-DotPlot(object = seuset_immune, features = ranked.genes[1:30],  
-        scale=TRUE, dot.scale = 5,
-        assay = "RNA", cols = c("blue","red")) + RotatedAxis() + coord_flip() +
-  theme(axis.text.x = element_text(size=7), axis.text.y = element_text(size=7))
-dev.off()
-
-png(paste0("TEPA_plots/",save,"Heatmap.png"), h = 4000, w = 6000, res = 300)
-DoHeatmap(object = subset(seuset_nano, downsample = 500), size = 6, 
-          features = head(ranked.genes, 20)) +
-  scale_fill_gradientn(colors = c("blue", "black", "red")) + 
-  theme(axis.text = element_text(size=15)) + NoLegend() +
-  theme(plot.margin = margin(2,2,1.5,1.2, "cm"))
-dev.off()
 
 SaveSeuratRds(seuset_nano, "TEPA_results/N00_seusetNanoRed.Rds")
 

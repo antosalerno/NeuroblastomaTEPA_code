@@ -78,6 +78,7 @@ dev.off()
 noclass <- subset(noclass, subset = percent.ribo < 10 & nCount_RNA > 200) # 1321 >> 672
 #try first without discarding cells with high percentage of mitochondrial genes (most of them)
 
+
 png("TEPA_plots/S07_postFilterQC_violin.png", h = 3000, w = 4200, res = 300)
 VlnPlot(noclass, features = c("nFeature_RNA", "nCount_RNA"), ncol = 3, pt.size = 0.000005)
 dev.off()
@@ -139,6 +140,7 @@ noclass <- RunUMAP(noclass, dims = 1:60, reduction = "pca", verbose = FALSE)
 
 png("TEPA_plots/S07_umapExplore.png", w = 6000, h = 2000, res = 300)
 #pdf("TEPA_final_figures/S07_umapExplore.pdf", w = 15, h = 8)
+
 DimPlot(object = noclass, pt.size = 0.0005, reduction = 'umap', ncol = 3,
         group.by = c("orig.ident", "condition", "seurat_clusters"), label = FALSE) +
   ggtitle(paste(as.character(nrow(noclass@meta.data)), " cells")) +
@@ -210,6 +212,7 @@ markers <- getTopMarkers(noclass.markers, 5)
 
 png("TEPA_plots/S07_noclassDotPlot.png", h = 2000, w = 2500, res = 300)
 #pdf("TEPA_final_figures/S07_noclassDotPlot.pdf", h = 4, w = 11)
+
 DotPlot(object = seuset_noclass, features = unique(markers), # split.by = "condition",
         scale=TRUE, col.min = -4, col.max = 4, 
         dot.min = 0, dot.scale = 4, cols = c("blue","red")) + RotatedAxis() + #scale_x_reverse() +
