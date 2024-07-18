@@ -131,44 +131,6 @@ data <- passedQC
 
 target_data <- aggregateCounts(passedQC)
 
-# ### 3.6 - Limit of Quantification (Detection Rates) ###
-# 
-# # Define LOQ SD threshold and minimum value
-# cutoff <- 2
-# minLOQ <- 2
-# 
-# # Calculate LOQ per module tested 
-# LOQ <- data.frame(row.names = colnames(target_data))
-# LOQ <- pmax(minLOQ, pData(target_data)[, "NegGeoMean_Mm_R_NGS_WTA_v1.0"]
-#             * pData(target_data)[, "NegGeoSD_Mm_R_NGS_WTA_v1.0"] ^ cutoff)
-# 
-# pData(target_data)$LOQ <- LOQ
-# 
-# ### - Filtering out either segments and/or genes with abnormally low signal ###
-# LOQ_Mat <- c()
-# ind <- fData(target_data)$Module == "Mm_R_NGS_WTA_v1.0"
-# Mat_i <- t(esApply(target_data[ind, ], MARGIN = 1,
-#                      FUN = function(x) {
-#                        x > LOQ
-#                      }))
-# LOQ_Mat <- rbind(LOQ_Mat, Mat_i)
-# 
-# # ensure ordering since this is stored outside of the geomxSet
-# LOQ_Mat <- LOQ_Mat[fData(target_data)$TargetName, ]
-# 
-# ### By segment gene detection rates ###
-# 
-# # Save detection rate information to pheno data
-# pData(target_data)$GenesDetected <- 
-#   colSums(LOQ_Mat, na.rm = TRUE)
-# pData(target_data)$GeneDetectionRate <-
-#   pData(target_data)$GenesDetected / nrow(target_data)
-# 
-# target_data <-
-#   target_data[, pData(target_data)$GeneDetectionRate >= .1]
-# 
-# dim(target_data)
-
 ### 3.6 - Normalisation 
 ### 3.6.1.  3rd quantile ###
 norm_target_data <- normalize(target_data, norm_method="quant",
@@ -247,7 +209,7 @@ res <- FindMarkers(seuset_nanoTEPA, ident.1 = "T", ident.2 = "F", slot="counts",
                    only.pos = FALSE, verbose = FALSE, assay= "GeoMx", 
                    test.use="negbinom")
 res$p_val_adj = p.adjust(res$p_val, method='BH')
-write.csv(res, file=paste0("TEPA_results/N00_nanoInf_gCond_DEA.csv"))
+write.csv(res, file=paste0("TEPA_results/N00_nanoInf_gCond_DEA_MAST.csv"))
 
 
 SaveSeuratRds(seuset_nano, "TEPA_results/N00_seusetNanoRed.Rds")

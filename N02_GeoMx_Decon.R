@@ -26,7 +26,7 @@ library("stringr")
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
 
-#### 8 - Deconvolution analysis using SingleR ####
+#### SpatialDecon ####
 
 BiocManager::install("SpatialDecon")
 library(SpatialDecon)
@@ -43,8 +43,10 @@ head(results)
 
 #source("TEPA_code/DWLS-master/Deconvolution_functions.R")
 
-# library(usethis) 
-# usethis::edit_r_environ()
+
+#### SingleR ####
+library(devtools)
+library("SingleR")
 
 dataSC <- LoadSeuratRds("TEPA_results/S08_seusetFull.SeuratRds")
 Idents(dataSC) <- "scType"
@@ -54,21 +56,8 @@ labels = unique(Idents(dataSC))
 scdata <- GetAssayData(dataSC[["integrated"]], slot = "scale.data")
 spdata <- GetAssayData(seuset_nano, slot = "scale.data")
 
-
-library(devtools)
-library("SingleR")
-
 pred <- SingleR(test=dataSC, ref=dataBulk, labels=labels, de.method="wilcox")
 table(pred$labels)
 
-
-
-### Spatial Deconvolution with MuSiC
-
-install.packages('devtools')
-
-# install the MuSiC package
-devtools::install_github('xuranw/MuSiC')
-
-# load
-library(MuSiC)
+library(usethis) 
+usethis::edit_r_environ()
