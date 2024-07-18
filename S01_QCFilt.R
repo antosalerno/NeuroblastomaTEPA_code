@@ -2,11 +2,11 @@
 ## author: Antonietta Salerno
 ## date: 22/12/2022
 
-library("Seurat")
+library("Seurat") # Run with v4
 library("ggplot2")
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
-immune <- LoadSeuratRds("TEPA_results/S00_immune.Rds")
+#immune <- LoadSeuratRds("TEPA_results/S00_immune.Rds")
 
 #### 1 - QC and filtering of immune cells ####
 
@@ -61,11 +61,11 @@ plot3 <- FeatureScatter(immune, feature1 = "nCount_RNA", feature2 = "nFeature_RN
 plot1 + plot2 + plot3  # We can spot two separate data clouds because of the bimodal distribution of the data: tumour vs immune cells
 dev.off()
 
-SaveSeuratRds(immune,"TEPA_results/S01_immuneFilt.Rds")
+#SaveSeuratRds(immune,"TEPA_results/S01_immuneFilt.Rds")
 
 #### 2 - Batch effect correction ####
 
-immune <- LoadSeuratRds("S01_immuneFilt.Rds")
+#immune <- LoadSeuratRds("S01_immuneFilt.Rds")
 
 samples.list <- SplitObject(immune, split.by = "condition")
 
@@ -79,7 +79,7 @@ features <- SelectIntegrationFeatures(object.list = samples.list)
 immune.anchors <- FindIntegrationAnchors(object.list = samples.list,anchor.features = features)
 immune.combined <- IntegrateData(anchorset = immune.anchors)
 
-SaveSeuratRds(immune.combined, "TEPA_results/S01_immuneInt.Rds")
+#SaveSeuratRds(immune.combined, "TEPA_results/S01_immuneInt.Rds")
 
 
 

@@ -10,7 +10,7 @@ library("fgsea")
 library(dplyr)
 library(devtools)
 library(msigdb)
-library("Seurat")
+library("Seurat") # Run with v4
 library(readr)
 library(stringr)
 library(clusterProfiler)
@@ -28,7 +28,7 @@ library(org.Mm.eg.db)
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
-seuset_immune <- LoadSeuratRds("TEPA_results/S03_immuneDiff.Rds")
+#seuset_immune <- LoadSeuratRds("TEPA_results/S03_immuneDiff.Rds")
 clusters = unique(seuset_immune@meta.data$celltypes)
 immune.markers <- read.csv("TEPA_results/S03_DEA_clusterMarkers.csv")
 
@@ -157,5 +157,5 @@ b <- barPlotGSEA(fgseaResByType, byType = TRUE)
 ggsave(b, file=paste0("TEPA_plots/S04_barplotCellTypesEnriched.pdf"),
        width = 40, height = 20, units = "cm", limitsize = F, dpi = 500)
 
-SaveSeuratRds(seuset_immune, "TEPA_results/S04_immuneDiff.Rds")
+#SaveSeuratRds(seuset_immune, "TEPA_results/S04_immuneDiff.Rds")
 

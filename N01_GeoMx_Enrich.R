@@ -18,7 +18,7 @@ library(openxlsx)
 library(patchwork)
 library(clusterProfiler)
 library("tibble")
-library("Seurat") 
+library("Seurat") # Run with v4
 library("fgsea")
 library("stringr")
 
@@ -27,7 +27,8 @@ setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
 
 #### 7 - Pathway enrichment Analysis ####
-seuset_nano <- LoadSeuratRds("TEPA_results/N00_seusetNanoRed.Rds")
+
+#seuset_nano <- LoadSeuratRds("TEPA_results/N00_seusetNanoRed.Rds")
 
 ### 7.1 - Cluster markers
 ### 7.2 - Infiltration vs Non-Infiltration given Treatment

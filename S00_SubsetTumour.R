@@ -9,7 +9,7 @@ if (!requireNamespace("remotes", quietly = TRUE)) {
   install.packages("remotes")
 }
 
-library("Seurat")
+library("Seurat") # Run with v4
 library("SeuratObject")
 library("ggplot2")
 library(dplyr)
@@ -49,10 +49,10 @@ seuset$condition <- ifelse(test = seuset$orig.ident %in% c("CF", "CM"), yes = "C
 seuset$sampleType <- ifelse(test = seuset$orig.ident %in% c("TM", "CM"), yes = "Myeloid", no = "Full")
 
 # table(seuset$orig.ident)
-SaveSeuratRds(seuset, "TEPA_results/S00_rawcounts.Rds")
+#SaveSeuratRds(seuset, "TEPA_results/S00_rawcounts.Rds")
 
 #### 2 - Data pre-processing ####
-seuset <- LoadSeuratRds("TEPA_results/S00_rawcounts.Rds")
+#seuset <- LoadSeuratRds("TEPA_results/S00_rawcounts.Rds")
 
 png("TEPA_plots/S00_preFilterQC_violin.png", h = 3000, w = 4200, res = 300)
 VlnPlot(seuset, features = c("nFeature_RNA", "nCount_RNA", "Mycn"), ncol = 3, pt.size = 0.000005)
@@ -105,7 +105,7 @@ FeaturePlot(seuset, ncol = 2, pt.size = 0.0005,
   scale_colour_gradientn(colours = rev(brewer.pal(n = 11, name = "RdBu")))
 dev.off()
 
-SaveSeuratRds(seuset, "TEPA_results/S00_seusetRed.Rds")
+#SaveSeuratRds(seuset, "TEPA_results/S00_seusetRed.Rds")
 
 #### 4 - Identify tumor cells ####
 
@@ -165,7 +165,7 @@ png("TEPA_plots/S00_noClass_MycnPtprc.png", h = 3000, w = 4200, res = 300)
 FeatureScatter(seuset[,seuset$class == "noClass"], feature1 = "Mycn", feature2 = "Ptprc", pt.size = 1)
 dev.off()
 
-SaveSeuratRds(seuset, "TEPA_results/S00_seusetClass.Rds")
+#SaveSeuratRds(seuset, "TEPA_results/S00_seusetClass.Rds")
 
 ### 5 -  Select only immune cells ####
 
@@ -206,5 +206,5 @@ VlnPlot(immune, features = c("nFeature_RNA", "nCount_RNA", "Mycn"),
   scale_fill_manual(values = brewer.pal(4, "Paired"))
 dev.off()
 
-SaveSeuratRds(immune,"TEPA_results/S00_immune.Rds")
+#SaveSeuratRds(immune,"TEPA_results/S00_immune.Rds")
 

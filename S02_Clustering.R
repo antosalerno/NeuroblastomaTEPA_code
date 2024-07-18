@@ -2,7 +2,7 @@
 ## author: Antonietta Salerno
 ## date: 13/01/2022
 
-library("Seurat")
+library("Seurat") # Run with v4
 library("ggplot2")
 library("writexl")
 library(openxlsx)
@@ -16,7 +16,7 @@ source("TEPA_code/supportFunctions.R")
 
 #### 1 - Dimensionality reduction ####
 
-immune.combined <- LoadSeuratRds("TEPA_results/S01_immuneInt.Rds")
+#immune.combined <- LoadSeuratRds("TEPA_results/S01_immuneInt.Rds")
 
 # Scaling
 seuset_immune <- ScaleData(immune.combined, verbose = FALSE)
@@ -238,7 +238,7 @@ barplot(data_percentage, col=cellt_col, border="white",
         args.legend = list(x = "topright",inset = c(-0.45, 0)))
 dev.off()
 
-SaveSeuratRds(seuset_immune, "TEPA_results/S02_immuneAnn.SeuratRds")
+#SaveSeuratRds(seuset_immune, "TEPA_results/S02_immuneAnn.SeuratRds")
 
 
 

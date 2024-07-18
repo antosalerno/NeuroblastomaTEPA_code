@@ -18,7 +18,7 @@ library(openxlsx)
 library(patchwork)
 library(clusterProfiler)
 library("tibble")
-library("Seurat")
+library("Seurat") # Run with v4
 library("fgsea")
 library("stringr")
 
@@ -162,7 +162,7 @@ VlnPlot(seuset_nano, features = "AOINucleiCount", split.by = "Group",
 dev.off() 
 
 #### 5 - Dimensionality reduction ####
-seuset_nano <- LoadSeuratRds("TEPA_results/N00_seusetNano.Rds")
+#seuset_nano <- LoadSeuratRds("TEPA_results/N00_seusetNano.Rds")
 
 seuset_nano <- FindVariableFeatures(seuset_nano)
 seuset_nano <- ScaleData(seuset_nano)
@@ -212,5 +212,5 @@ res$p_val_adj = p.adjust(res$p_val, method='BH')
 write.csv(res, file=paste0("TEPA_results/N00_nanoInf_gCond_DEA_MAST.csv"))
 
 
-SaveSeuratRds(seuset_nano, "TEPA_results/N00_seusetNanoRed.Rds")
+#SaveSeuratRds(seuset_nano, "TEPA_results/N00_seusetNanoRed.Rds")
 

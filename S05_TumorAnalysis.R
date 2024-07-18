@@ -2,7 +2,7 @@
 ## author: Antonietta Salerno
 ## date: 07/02/2023
 
-library("Seurat")
+library("Seurat") # Run with v4
 library("MAST")
 library("writexl")
 library(openxlsx)
@@ -22,7 +22,7 @@ library(glmGamPoi)
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
-tumor <- LoadSeuratRds("TEPA_results/S00_tumor.Rds") #13560 cells and 21388 genes
+#tumor <- LoadSeuratRds("TEPA_results/S00_tumor.Rds") #13560 cells and 21388 genes
 
 #### 1 - QC and filtering of tumor cells ####
 
@@ -130,11 +130,11 @@ DimPlot(seuset_tumor, pt.size = 0.5, reduction = 'umap', ncol = 1, cols = cond_c
   theme(plot.title = element_text(hjust = 0.5)) 
 dev.off()
 
-SaveSeuratRds(seuset_tumor, "TEPA_results/S05_seusetTumorClu.Rds")
+#SaveSeuratRds(seuset_tumor, "TEPA_results/S05_seusetTumorClu.Rds")
 
 #### 3 - Clustering annotation ####
 
-seuset_tumor <- LoadSeuratRds("TEPA_results/S05_seusetTumorClu.Rds")
+#seuset_tumor <- LoadSeuratRds("TEPA_results/S05_seusetTumorClu.Rds")
 
 
 ### 3.1 Inter-cluster DEA: get marker genes ###
@@ -313,52 +313,34 @@ ggsave(p, file=paste0("TEPA_final_figures/", save, "DEA.pdf"), width = 28, heigh
 
 #### 4 - Gene Set Enrichment Analysis ####
 
-sets1 <- read.gmt("TEPA_data/mh.all.v2022.1.Mm.symbols.gmt") # Mouse hallmark
-sets2 <- read.gmt("TEPA_data/GOBP_CELL_MOTILITY.v2023.1.Mm.gmt")
-sets3 <- read.gmt("TEPA_data/REACTOME_NEUTROPHIL_DEGRANULATION.v2022.1.Mm.gmt") # The only Reactome pathway we're interested in
-sets4 <- read.gmt("TEPA_data/REACTOME_ENOS_ACTIVATION.v2023.1.Mm.gmt") # REACTOME_ENOS_ACTIVATION
-sets5 <- read.gmt("TEPA_data/REACTOME_PENTOSE_PHOSPHATE_PATHWAY.v2023.1.Mm.gmt")
-sets6 <- read.gmt("TEPA_data/WP_OXIDATIVE_STRESS_AND_REDOX_PATHWAY.v2023.1.Mm.gmt")
-sets7 <- read.gmt("TEPA_data/WP_OXIDATIVE_STRESS_RESPONSE.v2023.1.Mm.gmt")
-sets8 <- read.gmt("TEPA_data/WP_OXIDATIVE_DAMAGE_RESPONSE.v2023.1.Mm.gmt")
-sets9 <- read.gmt("TEPA_data/REACTOME_CITRIC_ACID_CYCLE_TCA_CYCLE.v2023.1.Mm.gmt")
-sets10 <- read.gmt("TEPA_data/REACTOME_DNA_DOUBLE_STRAND_BREAK_RESPONSE.v2023.1.Mm.gmt")
+# Read all sets and store them in a list
+sets <- lapply(paste0("TEPA_data/", c(
+  "mh.all.v2022.1.Mm.symbols.gmt",
+  "REACTOME_NEUTROPHIL_DEGRANULATION.v2022.1.Mm.gmt",
+  "GOBP_CELL_MOTILITY.v2023.2.Mm.gmt"
+  # "GOBP_NEUTROPHIL_ACTIVATION_INVOLVED_IN_IMMUNE_RESPONSE.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_CHEMOTAXIS.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_DEGRANULATION.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_DIFFERENTIATION.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_EXTRAVASATION.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_MEDIATED_CYTOTOXICITY.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_MEDIATED_IMMUNITY.v2023.2.Mm.gmt",
+  # "GOBP_NEUTROPHIL_MIGRATION.v2023.2.Mm.gmt",
+  # "GOBP_CELLULAR_RESPONSE_TO_COPPER_ION.v2023.2.Mm.gmt",
+  # "GOBP_COPPER_ION_HOMEOSTASIS.v2023.2.Mm.gmt",
+  # "GOBP_COPPER_ION_IMPORT.v2023.2.Mm.gmt",
+  # "GOBP_COPPER_ION_TRANSMEMBRANE_TRANSPORT.v2023.2.Mm.gmt",
+  # "GOBP_COPPER_ION_TRANSPORT.v2023.2.Mm.gmt",
+  # "GOBP_DETOXIFICATION_OF_COPPER_ION.v2023.2.Mm.gmt",
+  # "GOBP_RESPONSE_TO_COPPER_ION.v2023.2.Mm.gmt",
+  # "GOMF_COPPER_CHAPERONE_ACTIVITY.v2023.2.Mm.gmt",
+  # "GOMF_COPPER_ION_BINDING.v2023.2.Mm.gmt",
+  # "GOMF_COPPER_ION_TRANSMEMBRANE_TRANSPORTER_ACTIVITY.v2023.2.Mm.gmt"
+)), read.gmt)
 
-sets1$term <- as.character(sets1$term)
-sets2$term <- as.character(sets2$term)
-sets3$term <- as.character(sets3$term)
-sets4$term <- as.character(sets4$term)
-sets5$term <- as.character(sets5$term)
-sets6$term <- as.character(sets6$term)
-sets7$term <- as.character(sets7$term)
-sets8$term <- as.character(sets8$term)
-sets9$term <- as.character(sets9$term)
-sets10$term <- as.character(sets10$term)
+# Create named list with ontology term and containing genes
+sgsea <- fgsea_sets(sets)
 
-sets1 <- sets1 %>% split(x = .$gene, f = .$term)
-sets2 <- sets2 %>% split(x = .$gene, f = .$term)
-sets3 <- sets3 %>% split(x = .$gene, f = .$term)
-sets4 <- sets4 %>% split(x = .$gene, f = .$term)
-sets5 <- sets5 %>% split(x = .$gene, f = .$term)
-sets6 <- sets6 %>% split(x = .$gene, f = .$term)
-sets7 <- sets7 %>% split(x = .$gene, f = .$term)
-sets8 <- sets8 %>% split(x = .$gene, f = .$term)
-sets9 <- sets9 %>% split(x = .$gene, f = .$term)
-sets10 <- sets10 %>% split(x = .$gene, f = .$term)
-#sets3 <- sets3 %>% split(x = .$gene_symbol, f = .$gs_name)
-
-fgsea_sets <- list()
-fgsea_sets <- append(sets1, sets2)
-fgsea_sets <- append(fgsea_sets, sets3)
-fgsea_sets <- append(fgsea_sets, sets4)
-fgsea_sets <- append(fgsea_sets, sets5)
-fgsea_sets <- append(fgsea_sets, sets6)
-fgsea_sets <- append(fgsea_sets, sets7)
-fgsea_sets <- append(fgsea_sets, sets8)
-fgsea_sets <- append(fgsea_sets, sets9)
-fgsea_sets <- append(fgsea_sets, sets10)
-fgsea_sets <- append(fgsea_sets, custom)
-fgsea_sets <- append(fgsea_sets, copper_sign)
 
 Idents(seuset_tumor) <- "condition"
 clusters = unique(Idents(seuset_tumor))
@@ -410,67 +392,4 @@ VlnPlot(seuset_tumor, features =  "H1fx", cols = cond_col,
   geom_signif(xmin = 1, xmax = 2, y_position = 5.25, annotations="***")
 dev.off()
 
-
-#### 6 - Investigate whether the tumor is adrenergic or mesenchymal ####
-seuset_tumor <- LoadSeuratRds("TEPA_results/S05_seusetTumorClu.Rds")
-
-MES <- c("Elk4", "Creg1", "Dcaf6", "Id1", "Smad3", "Six4", "Six1", "Maml2", "Notch2",
-          "Cbfb", "Ifi203","Ifi204", "Ifi205", "Ifi206", "Ifi207", "Ifi208", "Ifi209",
-         "Ifi211","Ifi214", "Zfp217", "Egr3", "Zfp36l1", "Wwtr1", "Prrx1", "Sox9",
-          "Meox1", "Meox2", "Aebp1", "Col1a1", "Col1a2", "Fn1", "Vim", "Snai2", "Prom1",
-          "Prrx1", "Yap1", "Hey1", "Egr3", "Fosl1", "Fosl2", "Tbx18", "Runx1", "Runx2",
-         "Mef2d", "Irf1", "Irf2", "Irf3", "Fli1", "Glis3", "Maff", "Bhlhe41", "Nr3c1")
-ADRN <- c("Zfp536", "Phox2a", "Hand1", "Ascl1", "Klf13", "Sox11", "Gata2", "Gata3", "Klf7",
-          "Eya1", "Tfap2b", "Isl1", "Hey1", "Six3", "Dach1", "Phox2b", "Pbx3", "Satb1",
-          "Chga", "Chgb", "Dbh", "Dlk1", "Tfap2b", "Six3")
-
-# https://www.cell.com/cell-reports/pdf/S2211-1247(22)01296-7.pdf
-# https://www.nature.com/articles/ng.3899
-# https://www.nature.com/articles/ng.3899
-# https://www.nature.com/articles/s41467-019-09470-w#:~:text=Mesenchymal%2Dtype%20(MES)%20neuroblastoma,a%20high%20transcriptional%20plasticity1.
-
-# Run gsea
-custom_tum <- list(MES,ADRN)
-names(custom_tum) <- c("MESENCHYMAL TUMOR", "ADRENERGIC TUMOR")
-
-Idents(seuset_tumor) <- "condition"
-clusters = unique(Idents(seuset_tumor))
-save = "S05_tumorAdreMese_"
-gseaRES(clusters, fgsea_sets = custom_tum, save = save, 
-        minSize = 5, input = "tumor")
-
-# Add module score to the Seurat seuset_tumor for each signature ###
-
-seuset_tumor <- AddModuleScore(seuset_tumor, assay = "RNA", features = list(ADRN), name=make.names("Adrenergic"))
-names(seuset_tumor@meta.data)[grep(make.names("Adrenergic"), names(seuset_tumor@meta.data))] <- "Adrenergic"
-
-seuset_tumor <- AddModuleScore(seuset_tumor, assay = "RNA", features = list(MES), name=make.names("Mesenchymal"))
-names(seuset_tumor@meta.data)[grep(make.names("Mesenchymal"), names(seuset_tumor@meta.data))] <- "Mesenchymal"
-
-library(RColorBrewer)
-png("TEPA_plots/S05_tumorAdreMese_FeaturePlot.png", h = 3000, w = 4500, res = 200)
-patchwork::wrap_plots(FeaturePlot(seuset_tumor, ncol = 2, combine = TRUE, pt.size = 5,
-                                  features = c("Adrenergic", "Mesenchymal"), label = F,
-                                  repel = TRUE)) & theme_minimal() &
-  scale_colour_gradientn(colours = rev(brewer.pal(n = 11, name = "RdBu")))
-dev.off()
-
-Idents(seuset_tumor) <- "condition"
-png("TEPA_plots/S05_tumorAdreMese_Dotplot.png", h = 2000, w = 2500, res = 300)
-DotPlot(object = seuset_tumor, features = unique(c(MES,ADRN)), 
-        scale=TRUE, col.min = -4, col.max = 4, 
-        dot.min = 0, dot.scale = 5, cols = c("blue","red")) + RotatedAxis() + coord_flip() +
-  theme(axis.text.x = element_text(size=7), axis.text.y = element_text(size=7))
-dev.off()
-
-Idents(seuset_tumor) <- "condition"
-png("TEPA_plots/S05_tumorAdreMese_ScatterPlot.png", h = 3000, w = 4200, res = 300)
-FeatureScatter(seuset_tumor, feature1 = "Adrenergic", feature2 = "Mesenchymal", pt.size = 0.0005)
-dev.off()
-
-pdf("TEPA_plots/S06_Ftl1_VlnPlot_Tumour.pdf", h = 6, w = 10)
-Idents(seuset_tumor) <- "celltypes"
-VlnPlot(seuset_tumor, features = "Ftl1", split.by = "condition", layer = "data", 
-        ncol = 2, pt.size = 0.000005)
-dev.off()
 

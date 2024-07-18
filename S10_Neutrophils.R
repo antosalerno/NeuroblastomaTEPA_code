@@ -14,7 +14,7 @@ library(leidenAlg)
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
-seuset_immune <- LoadSeuratRds("TEPA_results/S03_immuneDiff.Rds")
+#seuset_immune <- LoadSeuratRds("TEPA_results/S03_immuneDiff.Rds")
 
 
 # Sub-clustering
@@ -86,11 +86,11 @@ dev.off()
 
 neutro$seurat_clusters <- as.factor(ifelse(test=neutro$seurat_clusters== "1", yes="N1", no='N2'))
 Idents(neutro) <- neutro$seurat_clusters
-SaveSeuratRds(neutro,"TEPA_results/S10_neutroAnn.Rds")
+#SaveSeuratRds(neutro,"TEPA_results/S10_neutroAnn.Rds")
 
 ### Check if N1 more TEPA/Control 
 
-neutro <- LoadSeuratRds("TEPA_results/S10_neutroAnn.Rds")
+#neutro <- LoadSeuratRds("TEPA_results/S10_neutroAnn.Rds")
 
 
 pdf("TEPA_plots/S10_N1_condition.pdf", w = 15, h = 8)

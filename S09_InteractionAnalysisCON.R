@@ -11,14 +11,14 @@ library("NMF")
 library("circlize")
 library(ComplexHeatmap)
 #devtools::install_github("jinworks/CellChat")
-library("CellChat")
+library("CellChat") # Run with v2.0
 library(patchwork)
 options(stringsAsFactors = FALSE)
 # reticulate::use_python("/Users/suoqinjin/anaconda3/bin/python", required=T) 
 
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
-seuset_con <- LoadSeuratRds("TEPA_results/S08_seusetFull.Rds")
+#seuset_con <- LoadSeuratRds("TEPA_results/S08_seusetFull.Rds")
 
 # 1. DATA PREPARATION ####
 

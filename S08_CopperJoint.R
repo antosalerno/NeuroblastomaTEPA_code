@@ -2,18 +2,17 @@
 ## author: Antonietta Salerno
 ## date: 13/04/2023
 
-library("Seurat")
+library("Seurat") 
 library("ggplot2")
 library(RColorBrewer)
 library(magick)
 library(GetoptLong)
 
-
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
 
-seuset_immune <- LoadSeuratRds("TEPA_results/S02_immuneAnn.SeuratRds")
-seuset_tumor <- LoadSeuratRds("TEPA_results/S00_tumor.Rds")
+#seuset_immune <- LoadSeuratRds("TEPA_results/S02_immuneAnn.SeuratRds")
+#seuset_tumor <- LoadSeuratRds("TEPA_results/S00_tumor.Rds")
 
 seuset_full <- merge(seuset_immune, y = seuset_tumor, 
                      add.cell.ids = c("immune", "tumor"), 
@@ -35,7 +34,7 @@ seuset_full@meta.data$celltypes <- factor(seuset_full@meta.data$celltypes,
                                                      "Basophils", "Eosinophils", "Neutrophils", "Tumor"  
                                             ))
 
-SaveSeuratRds(seuset_full, "TEPA_results/S08_seusetFull.SeuratRds")
+#SaveSeuratRds(seuset_full, "TEPA_results/S08_seusetFull.SeuratRds")
 
 
 #### Create a signature of copper-related genes ####
@@ -53,7 +52,7 @@ grep(pattern = "Sod1",
 
 #### Check differentially expressed genes in different cell types ####
 
-seuset_full <- LoadSeuratRds("TEPA_results/S08_seusetFull.Rds")
+#seuset_full <- LoadSeuratRds("TEPA_results/S08_seusetFull.Rds")
 
 clusters = levels(seuset_immune$celltypes)
 df <- data.frame()

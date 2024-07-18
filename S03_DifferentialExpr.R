@@ -2,7 +2,7 @@
 ## author: Antonietta Salerno
 ## date: 16/12/2022
 
-library("Seurat")
+library("Seurat") # Run with v4
 library("writexl")
 library(openxlsx)
 library('limma')
@@ -155,7 +155,7 @@ p <- EnhancedVolcano(res, subtitle = "",
                                       "\n",'Downregulated = ', nrow(res[res$avg_log2FC< -log2FC&res$p_val_adj<=0.05,]), ' genes'))+ theme(plot.title = element_text(hjust = 0.5)) + coord_flip()
 ggsave(p, file=paste0("TEPA_plots/", save, "DEA.png"), width = 30, height = 25, units = "cm")
 
-SaveSeuratRds(seuset_immune,"TEPA_results/S03_immuneDiff.Rds")
+#SaveSeuratRds(seuset_immune,"TEPA_results/S03_immuneDiff.Rds")
 
 
 

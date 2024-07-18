@@ -11,7 +11,7 @@ if (!requireNamespace("remotes", quietly = TRUE)) {
   install.packages("remotes")
 }
 
-library("Seurat")
+library("Seurat") 
 library("SeuratObject")
 library("ggplot2")
 library(dplyr)
@@ -26,7 +26,7 @@ library("MAST")
 setwd("~/Library/CloudStorage/OneDrive-UNSW/TEPA_project")
 source("TEPA_code/supportFunctions.R")
 
-seuset <- LoadSeuratRds("TEPA_results/S00_seusetClass.Rds")
+#seuset <- LoadSeuratRds("TEPA_results/S00_seusetClass.Rds")
 
 noclass <- subset(seuset, class == "noClass")
 
@@ -100,7 +100,7 @@ plot3 <- FeatureScatter(noclass, feature1 = "nCount_RNA", feature2 = "nFeature_R
 plot1 + plot2 + plot3  # We can spot two separate data clouds because of the bimodal distribution of the data: tumour vs noclass cells
 dev.off()
 
-SaveSeuratRds(noclass,"TEPA_results/S07_noclassFilt.Rds")
+#SaveSeuratRds(noclass,"TEPA_results/S07_noclassFilt.Rds")
 
 #### 2 - Batch effect correction ####
 
@@ -118,7 +118,7 @@ features <- SelectIntegrationFeatures(object.list = samples.list)
 noclass.anchors <- FindIntegrationAnchors(object.list = samples.list,anchor.features = features)
 noclass.combined <- IntegrateData(anchorset = noclass.anchors)
 
-SaveSeuratRds(noclass.combined, "TEPA_results/S07_noclassInt.Rds")
+#SaveSeuratRds(noclass.combined, "TEPA_results/S07_noclassInt.Rds")
 
 
 ### 2 - Clustering ####
@@ -158,12 +158,12 @@ DimPlot(object = noclass, pt.size = 0.0005, reduction = 'umap', ncol = 3,
   theme(plot.title = element_text(hjust = 0.5))
 dev.off()
 
-SaveSeuratRds(noclass, "TEPA_results/S07_noclassAnn.SeuratRds")
+#SaveSeuratRds(noclass, "TEPA_results/S07_noclassAnn.SeuratRds")
 
 
 #### 3 - Inter-cluster DEA: get marker genes ####
 
-seuset_noclass <- LoadSeuratRds("TEPA_results/S07_noclassAnn.SeuratRds")
+#seuset_noclass <- LoadSeuratRds("TEPA_results/S07_noclassAnn.SeuratRds")
 
 
 DefaultAssay(seuset_noclass) <- "RNA"
