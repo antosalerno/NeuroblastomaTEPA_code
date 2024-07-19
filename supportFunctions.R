@@ -39,7 +39,7 @@ createSets <- function(markers = immune.markers,
   for(c in 1:length(clusters)){
     clusterDF <- markers[markers$cluster == clusters[c],]
     if (nrow(clusterDF) > 0){
-      clusterDF <- clusterDF[clusterDF$p_val_adj < 0.05,]
+      clusterDF <- clusterDF[clusterDF$p_val_adj < 0.01,]
       clusterDF <- clusterDF[order(-c(clusterDF$avg_log2FC)),]
       top_genes <- head(clusterDF[clusterDF$cluster == clusters[c],]$gene)
       obj <- AddModuleScore(obj, assay = "RNA", features = list(top_genes), name=make.names(as.character(clusters[c])))

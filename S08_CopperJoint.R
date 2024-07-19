@@ -149,12 +149,16 @@ h2 <- Heatmap(
 dev.off()
 
 
+copper_neutro <- c("Sod1", "Sod2", "Gls","Sp1", "Atox1", "Mtf2","Pdha1", "Pdhb", "Lias", "Dld", "Dlat", 
+                  "Mt1", "Mt2", "Slc31a1", "Atp7a","Steap4", "Adam8",  "Trem1", "Steap3", "Serpine1",
+                  "Sco1", "Cox11", "Commd1", "Mtf1","Fdx1")
+
+
 save = "S06_complexHeat_FC_Copper_Neutro"
 pdf(paste0("TEPA_final_figures/",save,".pdf"), h = 15, w = 5)
-sign_avgLogFCHeatMap(seuset_full, copper_genes, immune = FALSE, celltype = "Neutrophils",
+sign_avgLogFCHeatMap(seuset_full, copper_neutro, immune = FALSE, celltype = c("Neutrophils"),
                      cluster = TRUE, k = 1, legend = TRUE) 
 dev.off()
-
 
 
 
