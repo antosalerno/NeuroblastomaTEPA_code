@@ -104,7 +104,7 @@ plotVolcano <- function(clusters, res=NULL, type = "condition", file= NULL,
                          drawConnectors = TRUE,
                          widthConnectors = 0.3,colConnectors = 'gray51', maxoverlapsConnectors = Inf,
                          caption = paste0('Upregulated = ', nrow(res[res$avg_log2FC > log2FC&res$p_val_adj<= 0.05,]), ' genes',
-                                          "\n",'Downregulated = ', nrow(res[res$avg_log2FC < -log2FC &res$p_val_adj<= 0.05,]), ' genes'))+ theme(plot.title = element_text(hjust = 0.5)) + coord_flip()
+                                          "\n",'Downregulated = ', nrow(res[res$avg_log2FC < -log2FC &res$p_val_adj<= 0.05,]), ' genes'))+ theme(plot.title = element_text(hjust = 0.5))
       ggsave(p, file=paste0("TEPA_plots/",save, "DEA_",sub(" ", "_", cluster),".png"), width = 30, height = 25, units = "cm")
     })
   }
